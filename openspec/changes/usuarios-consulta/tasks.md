@@ -14,11 +14,14 @@
 ## 3. Verificación integral
 
 - [x] 3.1 Ejecutar `vendor/bin/pint --test`, la suite completa con `php artisan test` y `openspec validate usuarios-consulta --strict`. Verificar que los tres terminan sin errores
-- [ ] 3.2 Con el backend de desarrollo arriba y una sesión del portal, abrir la sección Usuarios del portal Angular (`IAM/frontend`): buscar por nombre y por RUT, paginar y abrir un detalle. Verificar que los datos coinciden con la base `IAM` y que una persona sin `iam:usuarios.leer` no ve la sección
+- [x] 3.2 Con el backend de desarrollo arriba y una sesión del portal, abrir la sección Usuarios del portal Angular (`IAM/frontend`): buscar por nombre y por RUT, paginar y abrir un detalle. Verificar que los datos coinciden con la base `IAM` y que una persona sin `iam:usuarios.leer` no ve la sección
 
 ## Workflow follow-up
 
-- 3.2, avance del 2026-11-09 en el portal: búsqueda por nombre (`olavarria`), por RUT con puntos (`18.251.599-k`) y detalle con roles por aplicación coinciden con la base `IAM`. Falta verlo en vivo: paginar (la base de desarrollo tiene menos de 20 personas) y entrar con una persona sin `iam:usuarios.leer`. Ambos casos están cubiertos por tests automáticos (backend 403 y paginación; frontend `permisoGuard` y menú).
+- 3.2, verificada el 2026-11-09 en el portal con la base `IAM` de desarrollo (11 personas):
+  - Búsqueda por nombre (`olavarria`, 2 resultados), por RUT con puntos (`18.251.599-k`) y detalle con roles por aplicación (`iam-admin/administrador`, `pago-honorarios/Docente`) coinciden con la base.
+  - Paginación: con `por_pagina=5` la API devuelve 5 + 5 + 1 personas, la página 4 vacía y `meta.total` 11 en todas; sin duplicados. En el portal (20 por página) `?pagina=2` muestra "Esta página no tiene resultados" y vuelve a la primera.
+  - Persona sin `iam:usuarios.leer`: no existe en este ambiente (los roles `administrador` y `mesa-de-ayuda` de `iam-admin` incluyen ese permiso) y crearla exigiría SQL a mano. Se verifica solo con tests automáticos: 403 en listado y detalle (backend) y `permisoGuard` y menú según permisos (frontend).
 
 - Archivar el cambio cuando esté desplegado y verificado.
 - Cambios siguientes del dominio: administración de usuarios (alta, edición, baja y reactivación con revocación) y asignación de roles con sus protecciones.
