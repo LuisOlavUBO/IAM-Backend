@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Acceso\ErrorDeLogin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: env('TRUSTED_PROXIES'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Errors of the login routes are browser navigations: back to the portal with ?error_login=<code>.
+        $exceptions->render(new ErrorDeLogin);
+
         // api/* answers errors in RFC 9457 with the stable code in "error" (UBO_PROBLEMS_ROUTES).
         $exceptions->render(new ProblemRenderer);
 

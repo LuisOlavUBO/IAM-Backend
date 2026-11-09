@@ -28,7 +28,65 @@ Desde que API-Auth ya no crea las tablas de IAM (cambio `traspaso-migraciones` d
 
 1. `php artisan migrate` en **API-IAM** (crea `users`, el catálogo y los clientes).
 2. `php artisan migrate` en **API-Auth** (crea tokens, sesiones, caché y colas).
-3. `php artisan iam:install` en API-IAM (cuando exista: crea el catálogo base y el primer administrador).
+3. `php artisan iam:install` en API-IAM (ver [Instalación de un ambiente](#instalación-de-un-ambiente)).
+
+## Portal (BFF) y sesión
+
+El portal es un Angular que se sirve **en el mismo origen** que `/api/iam/*` y usa URLs relativas. Nunca ve un token: el login lo hace API-IAM con el módulo Login de `ubo/common` (Authorization Code con PKCE contra el SSO de IAM) y el navegador solo recibe la cookie de sesión.
+
+| Ruta | Grupo | Qué hace |
+|---|---|---|
+| `GET /api/iam/v1/auth/login?redirect=/ruta` | web | Navegación al login de IAM |
+| `GET /api/iam/v1/auth/callback` | web | Vuelta desde IAM; con un error, redirige a `UBO_LOGIN_HOME?error_login=SIN_ACCESO\|LOGIN_INVALIDO\|IAM_NO_DISPONIBLE` |
+| `POST /api/iam/v1/auth/logout` | web | Formulario con `_token` (el `csrf` de `/me`); cierra también la sesión central |
+| `GET /api/iam/v1/me` | web | La persona: `uuid`, `nombre`, `correo`, `roles`, `permisos` y `csrf` |
+| Rutas de los dominios (`app/Domains/*/routes/v1.php`) | web | Exigen sesión (`401 NO_AUTENTICADO`), un permiso `iam:*` (`403`) y, si cambian datos, el header `X-XSRF-TOKEN` (`419`) |
+| `GET /api/iam/v1/salud`, docs y futuros endpoints M2M | api | Sin sesión |
+
+La sesión se revalida contra IAM cada `UBO_LOGIN_REVALIDATE` segundos (300) con el cliente M2M de API-IAM: una persona dada de baja pierde el acceso en minutos.
+
+**Desarrollo con Angular:** `ng serve` en `http://localhost:4200` con un `proxy.conf.json` que envía `/api/iam` a `http://localhost:8003`, `APP_URL=http://localhost:4200` y `SESSION_SECURE_COOKIE=false`. La redirección `http://localhost:4200/api/iam/v1/auth/callback` debe estar entre las `--redirect` de `iam:install`.
+
+## Instalación de un ambiente
+
+Una vez por ambiente, **a mano** (nunca desde el entrypoint ni desde CI: muestra secretos):
+
+```bash
+php artisan migrate
+php artisan iam:install --admin-email=ana@ubo.cl --admin-nombre="Ana Pérez" \
+  --redirect=https://<origen del portal>/api/iam/v1/auth/callback \
+  --redirect=http://localhost:4200/api/iam/v1/auth/callback
+```
+
+- Muestra el ambiente y la base y pide confirmación. Se niega a correr si la aplicación `iam-admin` ya existe.
+- Asegura el catálogo base de `api-auth` (permisos `user:read`, `user:write`, `introspect` y `sessions:revoke`, y roles `user`, `admin`, `introspector` y `session-revoker`), agregando solo lo que falta.
+- Crea:
+  - la aplicación `iam-admin` con sus siete permisos `iam:*`;
+  - los roles `administrador` (todos) y `mesa-de-ayuda` (`iam:usuarios.leer`, `iam:usuarios.administrar` e `iam:catalogo.leer`);
+  - el cliente del portal (`iam-admin-portal`) y el cliente M2M (`iam-admin-sistema`, con `session-revoker` e `introspector`);
+  - el primer administrador, o le da el rol si ya existe, sin tocar su clave. Con `--admin-acceso=microsoft` queda sin contraseña; por defecto recibe una temporal que vence en `IAM_CLAVE_TEMPORAL_HORAS` (72).
+- Todo ocurre en una transacción y queda en la auditoría (sin secretos). **Al final, y una sola vez**, imprime `UBO_LOGIN_CLIENT_ID`, `UBO_LOGIN_CLIENT_SECRET`, `UBO_AUTH_CLIENT_ID`, `UBO_AUTH_CLIENT_SECRET` y `CLAVE_TEMPORAL`. Se copian al `.env` del ambiente y se recarga la configuración (`php artisan optimize` o reiniciar el contenedor).
+
+**Acceso de emergencia**, si nadie puede entrar al portal:
+
+```bash
+php artisan iam:grant-admin ana@ubo.cl              # da iam-admin/administrador a una persona existente
+php artisan iam:grant-admin ana@ubo.cl --reactivar  # además la reactiva si estaba dada de baja
+```
+
+No crea personas ni cambia contraseñas, pide confirmación y queda en la auditoría.
+
+**Procedimiento de emergencia (secreto perdido):** si se pierde la salida de `iam:install` antes de copiar un secreto, se genera uno nuevo y se guarda su hash. Es la única carga manual permitida, mientras no exista `iam:rotate-secret` (cambio `clientes-oauth`):
+
+```bash
+php artisan tinker --execute 'echo ($s = Illuminate\Support\Str::random(40)).PHP_EOL.Illuminate\Support\Facades\Hash::make($s).PHP_EOL;'
+```
+
+```sql
+UPDATE oauth_clients SET secret = '<hash>', updated_at = SYSDATETIME() WHERE name = 'iam-admin-portal';
+```
+
+El secreto en claro (primera línea) va al `.env`; el hash (segunda línea), al `UPDATE`.
 
 ## Desarrollo
 

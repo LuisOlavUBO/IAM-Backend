@@ -1,3 +1,3 @@
 <?php
 
-// Rutas del dominio Usuarios, bajo /api/iam/v1 (routes/api.php). Sin rutas todavía.
+// Rutas del dominio Usuarios, bajo /api/iam/v1 en el grupo web, con sesión (routes/web.php).

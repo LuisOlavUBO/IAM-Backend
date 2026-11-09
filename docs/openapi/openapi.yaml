@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: API-IAM
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Backend de administración de IAM de la UBO: usuarios, catálogo (aplicaciones, roles y permisos),
     clientes OAuth y auditoría. Es dueño de los datos de identidad y acceso que usa API-Auth para emitir tokens.
@@ -11,11 +11,19 @@ info:
 
     **Respuestas:** los datos van en `data` y la información adicional (como la paginación) en `meta`.
 
+    **Sesión del portal (BFF):** Angular se sirve en el mismo origen y nunca ve un token. La persona entra por el
+    SSO de IAM navegando a `/api/iam/v1/auth/login`; API-IAM guarda los tokens en el servidor y el navegador solo
+    recibe la cookie de sesión. Las rutas del portal exigen esa sesión (`401 NO_AUTENTICADO` sin ella) y un permiso
+    `iam:*` (`403` sin él). Las que cambian datos exigen además el token CSRF: Angular lo envía solo en el header
+    `X-XSRF-TOKEN`, tomado de la cookie `XSRF-TOKEN` (`419` sin él).
+
     **Errores:** las rutas `/api/iam/*` responden los errores en RFC 9457 (`application/problem+json`)
     con un código estable en `error`, como las demás APIs de la UBO:
 
     | `error` | Estado | Cuándo |
     |---|---|---|
+    | `NO_AUTENTICADO` | 401 | No hay sesión del portal |
+    | `ACCESO_DENEGADO` | 403 | La persona no tiene el permiso `iam:*` que exige la ruta |
     | `VALIDACION` | 422 | Datos inválidos; los mensajes por campo van en `errores` |
     | `RUTA_NO_ENCONTRADA` / `METODO_NO_PERMITIDO` | 404 / 405 | La ruta o el método no existen |
     | `ERROR_INTERNO` | 500 | Error inesperado; el detalle queda solo en el log |
@@ -31,10 +39,127 @@ servers:
     description: Relativo al servidor donde se publica la API
 
 tags:
+  - name: Acceso
+    description: Inicio y cierre de sesión del portal por el SSO de IAM, y la persona con sesión.
   - name: Salud
     description: Estado del servicio.
 
 paths:
+  /api/iam/v1/auth/login:
+    get:
+      tags: [Acceso]
+      summary: Iniciar sesión (navegación del navegador)
+      description: |
+        Redirige al login central de IAM (Authorization Code con PKCE `S256`, cliente del portal). Es una
+        navegación completa, no una llamada de `HttpClient`. Al terminar, la persona vuelve a `redirect` (solo
+        rutas de este origen) o a la página inicial.
+      operationId: iniciarSesion
+      security: []
+      parameters:
+        - name: redirect
+          in: query
+          required: false
+          description: Ruta del portal a la que volver después del login (por ejemplo `/usuarios`).
+          schema: { type: string }
+      responses:
+        '302':
+          description: Redirección a `/api/auth/oauth/authorize` de IAM.
+
+  /api/iam/v1/auth/callback:
+    get:
+      tags: [Acceso]
+      summary: Fin del inicio de sesión (lo llama IAM)
+      description: |
+        IAM vuelve aquí con `code` y `state`. API-IAM canjea el código en el servidor, abre la sesión y
+        redirige a la ruta pedida. Si el login falla, redirige a la página inicial con `error_login`:
+
+        | `error_login` | Cuándo |
+        |---|---|
+        | `SIN_ACCESO` | La persona no tiene roles en `iam-admin` o IAM no autorizó el login |
+        | `LOGIN_INVALIDO` | El login no se inició en ese navegador, venció o IAM rechazó el código |
+        | `IAM_NO_DISPONIBLE` | IAM no respondió |
+      operationId: finInicioSesion
+      security: []
+      parameters:
+        - { name: code, in: query, required: true, schema: { type: string } }
+        - { name: state, in: query, required: true, schema: { type: string } }
+      responses:
+        '302':
+          description: A la ruta pedida con la cookie de sesión, o a la página inicial con `error_login`.
+
+  /api/iam/v1/auth/logout:
+    post:
+      tags: [Acceso]
+      summary: Cerrar sesión (formulario del navegador)
+      description: |
+        Revoca en IAM el token de la sesión, cierra la sesión local y redirige al logout central de IAM, que
+        vuelve al portal. Se envía como formulario `POST` con el campo `_token` (el `csrf` de `/me`), no con
+        `HttpClient`. Con `scope=local` cierra solo la sesión del portal.
+      operationId: cerrarSesion
+      security:
+        - sesionPortal: []
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [_token]
+              properties:
+                _token:
+                  type: string
+                  description: Token CSRF (`csrf` de `/me`).
+                scope:
+                  type: string
+                  enum: [local]
+      responses:
+        '302':
+          description: Redirección a `/api/auth/logout` de IAM.
+        '419':
+          description: Falta el token CSRF o no es válido.
+
+  /api/iam/v1/me:
+    get:
+      tags: [Acceso]
+      summary: Persona con sesión
+      description: Quién es la persona y qué permisos `iam:*` tiene. Angular arma su menú con `permisos`.
+      operationId: me
+      security:
+        - sesionPortal: []
+      responses:
+        '200':
+          description: La persona con sesión.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [uuid, nombre, correo, roles, permisos, csrf]
+                    properties:
+                      uuid:
+                        type: string
+                        format: uuid
+                        description: Identificador público de la persona, en minúsculas.
+                      nombre:
+                        type: [string, 'null']
+                      correo:
+                        type: [string, 'null']
+                        format: email
+                      roles:
+                        type: array
+                        items: { type: string }
+                        example: [administrador]
+                      permisos:
+                        type: array
+                        items: { type: string }
+                        example: ['iam:usuarios.leer', 'iam:usuarios.administrar']
+                      csrf:
+                        type: string
+                        description: Token CSRF para el formulario de logout.
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+
   /api/iam/v1/salud:
     get:
       tags: [Salud]
@@ -69,6 +194,13 @@ paths:
                   base_datos: { type: string, enum: [NO_DISPONIBLE] }
 
 components:
+  securitySchemes:
+    sesionPortal:
+      type: apiKey
+      in: cookie
+      name: api-iam-session
+      description: Cookie de sesión del portal, que se obtiene con el login. Su nombre real es el de `SESSION_COOKIE`.
+
   schemas:
     Problema:
       type: object
@@ -121,6 +253,17 @@ components:
           description: Elementos por página.
 
   responses:
+    NoAutenticado:
+      description: No hay sesión del portal (`NO_AUTENTICADO`). Angular debe navegar a `/api/iam/v1/auth/login`.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: No autenticado
+            status: 401
+            detail: Se requiere un token de acceso válido, vigente y no revocado.
+            error: NO_AUTENTICADO
     Validacion:
       description: Datos inválidos (`VALIDACION`), con los mensajes por campo en `errores`.
       content:
