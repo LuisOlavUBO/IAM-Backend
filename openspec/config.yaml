@@ -1,0 +1,10 @@
+schema: spec-driven
+
+context: |
+  API-IAM es el backend (BFF en Laravel) del portal de administración de IAM de la UBO; el frontend Angular vive en otro repositorio.
+  Los artefactos se escriben en español, con SHALL/MUST en los requisitos y escenarios `#### Scenario:` con WHEN/THEN.
+  Principio KISS: resolver lo de hoy con lo más simple, sin capas ni abstracciones por si acaso. Las dependencias nuevas requieren aprobación.
+  La base `IAM` es compartida con API-Auth y cada tabla tiene un solo servicio que escribe. API-IAM es dueño de users, applications, oauth_scopes, roles, oauth_scope_role, role_user, oauth_client_role, oauth_clients y de las tablas iam_*. En las tablas que lee API-Auth los cambios solo agregan columnas o tablas.
+  Las rutas van bajo /api/iam/v1, en español, con ids en la URL; los errores son RFC 9457 con códigos estables en mayúsculas (ubo/common).
+  La autenticación del portal usa el módulo Login de ubo/common (patrón BFF de PagoHonorarios); API-IAM nunca ve contraseñas al iniciar sesión.
+  Todo cambio que dependa de API-Auth debe nombrar el cambio de API-Auth del que depende y el orden de despliegue.

@@ -1,0 +1,25 @@
+headers {
+  Accept: application/json
+}
+
+docs {
+  # API-IAM
+
+  Backend de administración de IAM de la UBO (Laravel). Todas las rutas viven bajo `/api/iam`.
+
+  ## Cómo usar la colección
+
+  Elegir un entorno (`Local` o `Servidor`). La variable `baseUrl` es la raíz del servidor, sin `/api/iam`.
+
+  ## Errores (RFC 9457)
+
+  Las rutas `/api/iam/*` responden los errores como `application/problem+json`, con un código estable en `error`
+  (`VALIDACION`, `RUTA_NO_ENCONTRADA`, `METODO_NO_PERMITIDO`, `ERROR_INTERNO`).
+
+  Toda respuesta trae el header `X-Trace-Id`. Si se envía un `traceparent` (W3C Trace Context), la traza continúa.
+
+  ## Documentación relacionada
+
+  - Swagger UI: `{{baseUrl}}/api/iam/docs/swagger`
+  - OpenAPI: `{{baseUrl}}/api/iam/docs/openapi.yaml`
+}
