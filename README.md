@@ -171,8 +171,29 @@ El compose fuerza `APP_ENV=production`, `APP_DEBUG=false` y `LOG_CHANNEL=stderr`
 
 ```
 app/Domains/<Dominio>/routes/v1.php   rutas de cada dominio (Acceso, Catalogo, Usuarios, Clientes, Auditoria)
-routes/api.php                        /api/iam/v1/salud, docs y montaje de los dominios
+routes/web.php                        montaje de los dominios bajo /api/iam/v1 (grupo web, sesión del portal)
+routes/api.php                        /api/iam/v1/salud y docs
 database/migrations/                  esquema_base_iam y las migraciones de API-IAM
 docs/openapi/, docs/bruno/            contrato y colección
 openspec/                             specs y cambios
 ```
+
+Cada dominio sigue las capas de API-Maestros (SOLID, dependencias en una sola dirección:
+`Http` → `Application` → `Contracts` ← `Infrastructure`). Usuarios es el primero completo:
+
+```
+app/Domains/Usuarios/
++-- UsuariosServiceProvider.php   enlaza los contratos con su implementación (bootstrap/providers.php)
++-- Application/                  UsuarioService y objetos de la consulta (FiltroUsuarios, DetalleUsuario...)
++-- Contracts/                    IUsuarioRepository
++-- Exceptions/                   UsuarioNoEncontrado (404 USUARIO_NO_ENCONTRADO)
++-- Http/Controllers/V1/          UsuarioController: solo traduce HTTP
++-- Http/Requests/V1/             validación (FormRequest)
++-- Http/Resources/V1/            respuestas con lista blanca de campos
++-- Infrastructure/Eloquent/      EloquentUsuarioRepository
++-- Models/                       Usuario (tabla users, credenciales en $hidden)
++-- routes/v1.php
+```
+
+A diferencia de Maestros, el `ServiceProvider` no monta rutas (lo hace `routes/web.php`, que da la sesión) y no hay
+`Shared`: los errores de negocio extienden `DomainProblem` de `ubo/common`.

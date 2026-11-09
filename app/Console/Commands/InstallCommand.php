@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Domains\Auditoria\Auditoria;
 use App\Domains\Clientes\NuevoCliente;
-use App\Domains\Usuarios\ClaveTemporal;
+use App\Domains\Usuarios\Application\ClaveTemporal;
 use App\Rules\Rut;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;

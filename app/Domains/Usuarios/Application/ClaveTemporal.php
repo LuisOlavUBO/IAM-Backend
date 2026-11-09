@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Usuarios;
+namespace App\Domains\Usuarios\Application;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;

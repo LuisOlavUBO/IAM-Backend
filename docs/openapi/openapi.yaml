@@ -25,6 +25,7 @@ info:
     | `NO_AUTENTICADO` | 401 | No hay sesión del portal |
     | `ACCESO_DENEGADO` | 403 | La persona no tiene el permiso `iam:*` que exige la ruta |
     | `VALIDACION` | 422 | Datos inválidos; los mensajes por campo van en `errores` |
+    | `USUARIO_NO_ENCONTRADO` | 404 | No existe una persona con ese `uuid` |
     | `RUTA_NO_ENCONTRADA` / `METODO_NO_PERMITIDO` | 404 / 405 | La ruta o el método no existen |
     | `ERROR_INTERNO` | 500 | Error inesperado; el detalle queda solo en el log |
 
@@ -41,6 +42,8 @@ servers:
 tags:
   - name: Acceso
     description: Inicio y cierre de sesión del portal por el SSO de IAM, y la persona con sesión.
+  - name: Usuarios
+    description: Personas de IAM. Consulta con el permiso `iam:usuarios.leer`.
   - name: Salud
     description: Estado del servicio.
 
@@ -160,6 +163,90 @@ paths:
                         description: Token CSRF para el formulario de logout.
         '401': { $ref: '#/components/responses/NoAutenticado' }
 
+  /api/iam/v1/usuarios:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios
+      description: |
+        Personas de IAM ordenadas por nombre, paginadas. `buscar` filtra por nombre o correo que contengan el texto
+        (sin distinguir mayúsculas, sí tildes) y, si el texto es un RUT válido con o sin puntos, por ese RUT.
+        Nunca incluye contraseñas, `entra_oid` ni ids internos.
+      operationId: listarUsuarios
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: buscar
+          in: query
+          required: false
+          description: Parte del nombre o del correo, o un RUT (`12.345.678-5`, `12345678-5` o `123456785`).
+          schema: { type: string, maxLength: 100 }
+        - name: estado
+          in: query
+          required: false
+          schema: { type: string, enum: [activos, baja, todos], default: todos }
+        - name: pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: por_pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Una página de personas.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/UsuarioResumen' }
+                  meta: { $ref: '#/components/schemas/MetaPaginacion' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/usuarios/{uuid}:
+    get:
+      tags: [Usuarios]
+      summary: Ver un usuario
+      description: Datos de cuenta de la persona y sus roles agrupados por aplicación (ambos ordenados por nombre).
+      operationId: verUsuario
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Identificador público de la persona (sin distinguir mayúsculas).
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: La persona.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/UsuarioDetalle' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe una persona con ese `uuid`, o no tiene formato de UUID (`USUARIO_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Usuario no encontrado
+                status: 404
+                detail: No existe una persona con ese identificador.
+                error: USUARIO_NO_ENCONTRADO
+
   /api/iam/v1/salud:
     get:
       tags: [Salud]
@@ -252,6 +339,64 @@ components:
           minimum: 1
           description: Elementos por página.
 
+    UsuarioResumen:
+      type: object
+      required: [uuid, nombre, correo, rut, estado]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Identificador público de la persona, en minúsculas.
+        nombre: { type: string, example: Ana Pérez }
+        correo: { type: string, format: email, example: ana@ubo.cl }
+        rut:
+          type: [string, 'null']
+          description: RUT normalizado (sin puntos, con guion y `K` mayúscula).
+          example: 12345678-5
+        estado:
+          type: string
+          enum: [activo, baja]
+
+    UsuarioDetalle:
+      allOf:
+        - $ref: '#/components/schemas/UsuarioResumen'
+        - type: object
+          required: [baja_desde, tiene_clave, microsoft_vinculado, clave_temporal_vence, creado, actualizado, aplicaciones]
+          properties:
+            baja_desde:
+              type: [string, 'null']
+              format: date-time
+              description: Desde cuándo está dada de baja.
+            tiene_clave:
+              type: boolean
+              description: Tiene contraseña de IAM (sin revelarla).
+            microsoft_vinculado:
+              type: boolean
+              description: Ya entró con su cuenta Microsoft.
+            clave_temporal_vence:
+              type: [string, 'null']
+              format: date-time
+              description: Vencimiento de la clave temporal, si la tiene.
+            creado: { type: [string, 'null'], format: date-time }
+            actualizado: { type: [string, 'null'], format: date-time }
+            aplicaciones:
+              type: array
+              description: Aplicaciones donde la persona tiene roles.
+              items:
+                type: object
+                required: [nombre, descripcion, roles]
+                properties:
+                  nombre: { type: string, example: iam-admin }
+                  descripcion: { type: [string, 'null'] }
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                      required: [nombre, descripcion]
+                      properties:
+                        nombre: { type: string, example: administrador }
+                        descripcion: { type: [string, 'null'] }
+
   responses:
     NoAutenticado:
       description: No hay sesión del portal (`NO_AUTENTICADO`). Angular debe navegar a `/api/iam/v1/auth/login`.
@@ -264,6 +409,11 @@ components:
             status: 401
             detail: Se requiere un token de acceso válido, vigente y no revocado.
             error: NO_AUTENTICADO
+    AccesoDenegado:
+      description: La persona no tiene el permiso `iam:*` que exige la ruta (`ACCESO_DENEGADO`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
     Validacion:
       description: Datos inválidos (`VALIDACION`), con los mensajes por campo en `errores`.
       content:
