@@ -45,16 +45,16 @@ class InstallCommand extends Command
     private const IAM_SCOPES = [
         'iam:usuarios.leer' => 'Ver usuarios y sus roles',
         'iam:usuarios.administrar' => 'Crear, editar, dar de baja y asignar roles a usuarios',
-        'iam:catalogo.leer' => 'Ver aplicaciones, roles y permisos',
-        'iam:catalogo.administrar' => 'Crear y editar aplicaciones, roles y permisos',
+        'iam:aplicaciones.leer' => 'Ver aplicaciones, roles y permisos',
+        'iam:aplicaciones.administrar' => 'Crear y editar aplicaciones, roles y permisos',
         'iam:clientes.leer' => 'Ver clientes OAuth',
         'iam:clientes.administrar' => 'Crear, rotar y revocar clientes OAuth',
         'iam:auditoria.leer' => 'Ver la auditoría de IAM',
     ];
 
     private const IAM_ROLES = [
-        'administrador' => ['Administra IAM', ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:catalogo.leer', 'iam:catalogo.administrar', 'iam:clientes.leer', 'iam:clientes.administrar', 'iam:auditoria.leer']],
-        'mesa-de-ayuda' => ['Atiende a personas: altas, claves y roles', ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:catalogo.leer']],
+        'administrador' => ['Administra IAM', ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:aplicaciones.leer', 'iam:aplicaciones.administrar', 'iam:clientes.leer', 'iam:clientes.administrar', 'iam:auditoria.leer']],
+        'mesa-de-ayuda' => ['Atiende a personas: altas, claves y roles', ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:aplicaciones.leer']],
     ];
 
     public function __construct(private readonly IAuditor $auditoria, private readonly NuevoCliente $nuevoCliente)

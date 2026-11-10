@@ -3,7 +3,7 @@ info:
   title: API-IAM
   version: 0.2.0
   description: |
-    Backend de administración de IAM de la UBO: usuarios, catálogo (aplicaciones, roles y permisos),
+    Backend de administración de IAM de la UBO: usuarios, aplicaciones (con sus roles y permisos),
     clientes OAuth y auditoría. Es dueño de los datos de identidad y acceso que usa API-Auth para emitir tokens.
     Lo consume el portal Angular de IAM como BFF (backend-for-frontend), en el mismo origen.
 

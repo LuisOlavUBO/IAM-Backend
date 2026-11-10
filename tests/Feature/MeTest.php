@@ -17,7 +17,7 @@ class MeTest extends TestCase
     private const ANA = '0190f2a4-3c1e-7d2b-9a6f-1b2c3d4e5f60';
 
     private const PERMISOS = [
-        'iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:catalogo.leer', 'iam:catalogo.administrar',
+        'iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:aplicaciones.leer', 'iam:aplicaciones.administrar',
         'iam:clientes.leer', 'iam:clientes.administrar', 'iam:auditoria.leer',
     ];
 

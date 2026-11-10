@@ -4,7 +4,7 @@ namespace App\Domains\Usuarios\Domain\Dto;
 
 /**
  * A role a person has, with its application. A read object of Usuarios, so this domain does not
- * depend on the models of Catalogo.
+ * depend on the models of Aplicaciones.
  */
 final readonly class RolAsignadoDto
 {

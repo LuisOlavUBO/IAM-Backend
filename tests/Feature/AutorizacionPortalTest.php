@@ -15,7 +15,7 @@ class AutorizacionPortalTest extends TestCase
 {
     use IniciaSesionEnIam;
 
-    private const MESA_DE_AYUDA = ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:catalogo.leer'];
+    private const MESA_DE_AYUDA = ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:aplicaciones.leer'];
 
     protected function setUp(): void
     {

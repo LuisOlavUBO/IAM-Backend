@@ -26,7 +26,7 @@ API-IAM y API-Auth usan **la misma base, `IAM`**, y cada tabla tiene un solo ser
 
 Desde que API-Auth ya no crea las tablas de IAM (cambio `traspaso-migraciones` de API-Auth), una base vacía se prepara en este orden:
 
-1. `php artisan migrate` en **API-IAM** (crea `users`, el catálogo y los clientes).
+1. `php artisan migrate` en **API-IAM** (crea `users`, las aplicaciones, permisos y roles, y los clientes).
 2. `php artisan migrate` en **API-Auth** (crea tokens, sesiones, caché y colas).
 3. `php artisan iam:install` en API-IAM (ver [Instalación de un ambiente](#instalación-de-un-ambiente)).
 
@@ -62,7 +62,7 @@ php artisan iam:install --admin-email=ana@ubo.cl --admin-nombre="Ana Pérez" \
 - Asegura el catálogo base de `api-auth` (permisos `user:read`, `user:write`, `introspect` y `sessions:revoke`, y roles `user`, `admin`, `introspector` y `session-revoker`), agregando solo lo que falta.
 - Crea:
   - la aplicación `iam-admin` con sus siete permisos `iam:*`;
-  - los roles `administrador` (todos) y `mesa-de-ayuda` (`iam:usuarios.leer`, `iam:usuarios.administrar` e `iam:catalogo.leer`);
+  - los roles `administrador` (todos) y `mesa-de-ayuda` (`iam:usuarios.leer`, `iam:usuarios.administrar` e `iam:aplicaciones.leer`);
   - el cliente del portal (`iam-admin-portal`) y el cliente M2M (`iam-admin-sistema`, con `session-revoker` e `introspector`);
   - el primer administrador, o le da el rol si ya existe, sin tocar su clave. Con `--admin-acceso=microsoft` queda sin contraseña; por defecto recibe una temporal que vence en `IAM_CLAVE_TEMPORAL_HORAS` (72).
 - Todo ocurre en una transacción y queda en la auditoría (sin secretos). **Al final, y una sola vez**, imprime `UBO_LOGIN_CLIENT_ID`, `UBO_LOGIN_CLIENT_SECRET`, `UBO_AUTH_CLIENT_ID`, `UBO_AUTH_CLIENT_SECRET` y `CLAVE_TEMPORAL`. Se copian al `.env` del ambiente y se recarga la configuración (`php artisan optimize` o reiniciar el contenedor).
@@ -170,7 +170,7 @@ El compose fuerza `APP_ENV=production`, `APP_DEBUG=false` y `LOG_CHANNEL=stderr`
 ## Estructura
 
 ```
-app/Domains/<Dominio>/                dominios: Acceso, Catalogo, Usuarios, Clientes, Auditoria
+app/Domains/<Dominio>/                dominios: Acceso, Aplicaciones, Usuarios, Clientes, Auditoria
 app/Shared/                           núcleo compartido: Paginacion, Rut, Auditoria (IAuditor)
 app/Console/Commands/                 iam:install, iam:grant-admin, iam:make-feature
 routes/web.php                        montaje de los dominios bajo /api/iam/v1 (grupo web, sesión del portal)
@@ -213,19 +213,19 @@ routes/v1.php → VerUsuarioEndpoint → VerUsuarioQueryHandler → IUsuarioQuer
 - CQRS lite: un `QueryHandler` lee por un `I<Entidad>QueryRepository` que devuelve DTO; un `CommandHandler` escribe
   con la entidad de `Domain/`, su `I<Entidad>Repository`, la transacción y `IAuditor`. Sin bus ni eventos.
 - Nombres al estilo .NET: `I…` interfaz, `…Dto`, `…Exception`, `…QueryRepository` / `…Repository`, `…Service`.
-- Las capas `Domain`, `Infrastructure` y `Contracts` se crean solo cuando tienen algo (Catálogo hoy solo tiene
+- Las capas `Domain`, `Infrastructure` y `Contracts` se crean solo cuando tienen algo (Aplicaciones hoy solo tiene
   `routes/v1.php`); las subcarpetas por tipo, cuando una carpeta pasa de unos diez archivos.
 - Entre dominios solo se usa `Contracts/`; `Shared` no conoce dominios; un caso de uso no importa otro ni
   `Infrastructure`. `tests/Unit/ArquitecturaTest.php` lo verifica en cada `php artisan test`.
 - Un caso de uso nuevo se crea con:
 
   ```bash
-  php artisan iam:make-feature Catalogo ListarAplicaciones
+  php artisan iam:make-feature Aplicaciones ListarAplicaciones
   ```
 
   Crea la carpeta con sus cuatro archivos (`ListarAplicacionesQueryHandler`; con `--command`, un `CommandHandler`) y
-  su test en `tests/Feature/Catalogo/`, y muestra la línea de ruta que hay que agregar en
-  `app/Domains/Catalogo/routes/v1.php` (método, URL y permiso).
+  su test en `tests/Feature/Aplicaciones/`, y muestra la línea de ruta que hay que agregar en
+  `app/Domains/Aplicaciones/routes/v1.php` (método, URL y permiso).
 
 El `ServiceProvider` de cada dominio solo enlaza interfaces con implementaciones: las rutas las monta
 `routes/web.php`, que da la sesión del portal. Las excepciones de negocio extienden `DomainProblem` de `ubo/common`.

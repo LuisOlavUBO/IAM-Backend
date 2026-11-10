@@ -14,7 +14,7 @@ use Illuminate\Filesystem\Filesystem;
  * and the permission are decided by whoever adds the line it prints.
  */
 #[Signature('iam:make-feature
-    {dominio : Domain in PascalCase, e.g. Catalogo}
+    {dominio : Domain in PascalCase, e.g. Aplicaciones}
     {caso : Use case in PascalCase, e.g. ListarAplicaciones}
     {--command : The use case writes: <Caso>CommandHandler instead of <Caso>QueryHandler}')]
 #[Description('Crea un caso de uso en app/Domains/<Dominio>/Features/<CasoDeUso> con su test')]
@@ -41,7 +41,7 @@ class MakeFeatureCommand extends Command
 
         foreach ([$dominio, $caso] as $nombre) {
             if (preg_match('/^[A-Z][A-Za-z0-9]*$/', $nombre) !== 1) {
-                $this->components->error("Los nombres van en PascalCase (por ejemplo Catalogo ListarAplicaciones): «{$nombre}» no lo es.");
+                $this->components->error("Los nombres van en PascalCase (por ejemplo Aplicaciones ListarAplicaciones): «{$nombre}» no lo es.");
 
                 return self::FAILURE;
             }

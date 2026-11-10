@@ -45,7 +45,7 @@ class ListarUsuariosTest extends TestCase
 
     public function test_a_person_without_the_permission_gets_403(): void
     {
-        UboLogin::actingAs(id: 'a', roles: ['otro'], scopes: ['iam:catalogo.leer']);
+        UboLogin::actingAs(id: 'a', roles: ['otro'], scopes: ['iam:aplicaciones.leer']);
 
         $this->getJson('/api/iam/v1/usuarios')
             ->assertForbidden()

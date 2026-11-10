@@ -89,7 +89,7 @@ class ArquitecturaTest extends TestCase
                 'App\Domains\Usuarios\Infrastructure\DirectorioUsuariosService',
             ],
             'un dominio usa el modelo de otro' => [
-                'Domains/Catalogo/Domain/X.php',
+                'Domains/Aplicaciones/Domain/X.php',
                 'use App\Domains\Usuarios\Domain\ClaveTemporal;',
                 'App\Domains\Usuarios\Domain\ClaveTemporal',
             ],

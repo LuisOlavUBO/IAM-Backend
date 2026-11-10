@@ -27,7 +27,7 @@ class InstallCommandTest extends TestCase
     private const LOCAL_REDIRECT = 'http://localhost:4200/api/iam/v1/auth/callback';
 
     private const IAM_SCOPES = [
-        'iam:auditoria.leer', 'iam:catalogo.administrar', 'iam:catalogo.leer', 'iam:clientes.administrar',
+        'iam:aplicaciones.administrar', 'iam:aplicaciones.leer', 'iam:auditoria.leer', 'iam:clientes.administrar',
         'iam:clientes.leer', 'iam:usuarios.administrar', 'iam:usuarios.leer',
     ];
 
@@ -97,9 +97,10 @@ class InstallCommandTest extends TestCase
 
         $this->assertEqualsCanonicalizing(self::IAM_SCOPES, $this->scopesOf('iam-admin', 'administrador'));
         $this->assertEqualsCanonicalizing(
-            ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:catalogo.leer'],
+            ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:aplicaciones.leer'],
             $this->scopesOf('iam-admin', 'mesa-de-ayuda'),
         );
+        $this->assertFalse(DB::table('oauth_scopes')->where('name', 'like', 'iam:catalogo.%')->exists());
     }
 
     public function test_the_clients_of_api_iam(): void
