@@ -762,12 +762,19 @@ components:
           example: cliente.secreto.rotacion
         entidad:
           type: object
-          required: [tipo, id]
+          required: [tipo, id, nombre]
           properties:
-            tipo: { type: string, example: cliente }
+            tipo: { type: string, example: rol }
             id:
               type: string
-              description: '`uuid` para usuario y cliente; id numérico para aplicación, rol y permiso.'
+              description: Identificador guardado (`uuid` para usuario y cliente; id numérico para aplicación, rol y permiso).
+              example: '16'
+            nombre:
+              type: [string, 'null']
+              description: |
+                Nombre actual de la entidad (el rol como `aplicacion/rol`); `null` si ya no existe o su tipo no
+                tiene nombre conocido.
+              example: iam-admin/mesa-de-ayuda
         resultado: { type: string, enum: [ok, rechazado] }
         motivo:
           type: [string, 'null']

@@ -111,7 +111,8 @@ class ListarAuditoriaTest extends TestCase
 
         $this->assertStringStartsWith('2026-11-09T15:46:03', $entrada['ocurrido_en']);
         $this->assertSame(['tipo' => 'comando', 'uuid' => null, 'nombre' => null, 'correo' => null], $entrada['actor']);
-        $this->assertSame(['tipo' => 'usuario', 'id' => self::ANA], $entrada['entidad']);
+        // Ana is not in users in this test: the entity keeps its id without a name.
+        $this->assertSame(['tipo' => 'usuario', 'id' => self::ANA, 'nombre' => null], $entrada['entidad']);
         $this->assertSame('ok', $entrada['resultado']);
         $this->assertNull($entrada['motivo']);
         $this->assertNull($entrada['antes']);
@@ -179,7 +180,42 @@ class ListarAuditoriaTest extends TestCase
 
         $respuesta = $this->getJson('/api/iam/v1/auditoria?entidad_tipo=cliente&entidad_id='.self::CLIENTE)->assertOk();
 
-        $respuesta->assertJsonCount(1, 'data')->assertJsonPath('data.0.entidad', ['tipo' => 'cliente', 'id' => self::CLIENTE]);
+        $respuesta->assertJsonCount(1, 'data')->assertJsonPath('data.0.entidad', ['tipo' => 'cliente', 'id' => self::CLIENTE, 'nombre' => null]);
+    }
+
+    public function test_each_entity_has_its_current_name(): void
+    {
+        $iamAdmin = DB::table('applications')->insertGetId(['name' => 'iam-admin']);
+        $mesa = DB::table('roles')->insertGetId(['application_id' => $iamAdmin, 'name' => 'mesa-de-ayuda']);
+        $permiso = DB::table('oauth_scopes')->insertGetId(['application_id' => $iamAdmin, 'name' => 'iam:usuarios.leer', 'description' => 'Ver usuarios']);
+        DB::table('users')->insert(['uuid' => self::ANA, 'name' => 'Ana Pérez', 'email' => 'ana@ubo.cl']);
+        DB::table('oauth_clients')->insert([
+            'id' => self::CLIENTE, 'application_id' => $iamAdmin, 'name' => 'iam-admin-sistema', 'secret' => 'hash',
+            'redirect_uris' => '[]', 'grant_types' => '["client_credentials"]', 'revoked' => false,
+        ]);
+
+        $this->entrada('2026-11-09 10:00:00', 'aplicacion.creacion', ['entidad_tipo' => 'aplicacion', 'entidad_id' => (string) $iamAdmin]);
+        $this->entrada('2026-11-09 10:01:00', 'rol.permiso.asignacion', ['entidad_tipo' => 'rol', 'entidad_id' => (string) $mesa]);
+        $this->entrada('2026-11-09 10:02:00', 'permiso.creacion', ['entidad_tipo' => 'permiso', 'entidad_id' => (string) $permiso]);
+        $this->entrada('2026-11-09 10:03:00', 'usuario.rol.asignacion', ['entidad_tipo' => 'usuario', 'entidad_id' => self::ANA]);
+        $this->entrada('2026-11-09 10:04:00', 'cliente.creacion', ['entidad_tipo' => 'cliente', 'entidad_id' => strtoupper(self::CLIENTE)]);
+        $this->entrada('2026-11-09 10:05:00', 'rol.creacion', ['entidad_tipo' => 'rol', 'entidad_id' => '999999']);
+        $this->entrada('2026-11-09 10:06:00', 'rol.creacion', ['entidad_tipo' => 'rol', 'entidad_id' => 'no-numerico']);
+        $this->entrada('2026-11-09 10:07:00', 'otra.cosa', ['entidad_tipo' => 'desconocido', 'entidad_id' => '1']);
+        $this->conPermiso();
+
+        $entidades = array_column($this->getJson('/api/iam/v1/auditoria')->assertOk()->json('data'), 'entidad');
+
+        $this->assertSame([
+            ['tipo' => 'desconocido', 'id' => '1', 'nombre' => null],
+            ['tipo' => 'rol', 'id' => 'no-numerico', 'nombre' => null],
+            ['tipo' => 'rol', 'id' => '999999', 'nombre' => null],
+            ['tipo' => 'cliente', 'id' => strtoupper(self::CLIENTE), 'nombre' => 'iam-admin-sistema'],
+            ['tipo' => 'usuario', 'id' => self::ANA, 'nombre' => 'Ana Pérez'],
+            ['tipo' => 'permiso', 'id' => (string) $permiso, 'nombre' => 'iam:usuarios.leer'],
+            ['tipo' => 'rol', 'id' => (string) $mesa, 'nombre' => 'iam-admin/mesa-de-ayuda'],
+            ['tipo' => 'aplicacion', 'id' => (string) $iamAdmin, 'nombre' => 'iam-admin'],
+        ], $entidades);
     }
 
     public function test_rejected_attempts_of_one_person(): void

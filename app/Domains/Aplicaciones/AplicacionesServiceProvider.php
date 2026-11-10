@@ -2,8 +2,10 @@
 
 namespace App\Domains\Aplicaciones;
 
+use App\Domains\Aplicaciones\Contracts\IDirectorioAplicacionesService;
 use App\Domains\Aplicaciones\Domain\Interfaces\IAplicacionQueryRepository;
 use App\Domains\Aplicaciones\Infrastructure\AplicacionQueryRepository;
+use App\Domains\Aplicaciones\Infrastructure\DirectorioAplicacionesService;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -15,5 +17,6 @@ class AplicacionesServiceProvider extends ServiceProvider
     /** @var array<class-string, class-string> */
     public array $bindings = [
         IAplicacionQueryRepository::class => AplicacionQueryRepository::class,
+        IDirectorioAplicacionesService::class => DirectorioAplicacionesService::class,
     ];
 }

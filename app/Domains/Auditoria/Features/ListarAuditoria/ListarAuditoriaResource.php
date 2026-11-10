@@ -30,7 +30,7 @@ final class ListarAuditoriaResource extends JsonResource
                 'correo' => $e->actor->correo,
             ],
             'accion' => $e->accion,
-            'entidad' => ['tipo' => $e->entidadTipo, 'id' => $e->entidadId],
+            'entidad' => ['tipo' => $e->entidadTipo, 'id' => $e->entidadId, 'nombre' => $e->entidadNombre],
             'resultado' => $e->resultado,
             'motivo' => $e->motivo,
             'antes' => self::objeto($e->antes),

@@ -24,13 +24,15 @@ final readonly class EntradaAuditoriaDto
         public ?array $antes,
         public ?array $despues,
         public ?string $traceId,
+        public ?string $entidadNombre = null,
     ) {}
 
-    public function conActor(ActorDto $actor): self
+    /** The same entry with the names that come from other domains (design D3, D3b). */
+    public function completar(ActorDto $actor, ?string $entidadNombre): self
     {
         return new self(
             $this->ocurridoEn, $actor, $this->accion, $this->entidadTipo, $this->entidadId, $this->resultado,
-            $this->motivo, $this->antes, $this->despues, $this->traceId,
+            $this->motivo, $this->antes, $this->despues, $this->traceId, $entidadNombre,
         );
     }
 }

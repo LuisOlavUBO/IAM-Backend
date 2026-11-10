@@ -41,6 +41,8 @@ docs {
 
   `GET /api/iam/v1/auditoria` · sesión del portal · `iam:auditoria.leer`
 
+  `entidad.nombre` es el nombre actual de la entidad (`null` si ya no existe); `entidad.id`, el identificador guardado.
+
   Filtros combinables: `desde` y `hasta` (días incluidos), `actor` (uuid), `accion` (prefijo, como `cliente.`), `entidad_tipo` y `entidad_id` (exactos) y `resultado` (`ok` o `rechazado`).
 
   ## Respuesta 200
@@ -52,7 +54,7 @@ docs {
         "ocurrido_en": "2026-11-09T15:46:37+00:00",
         "actor": { "tipo": "comando", "uuid": null, "nombre": null, "correo": null },
         "accion": "cliente.rol.asignacion",
-        "entidad": { "tipo": "cliente", "id": "01a1c0fc-ec8b-717e-847b-4e85bcc1626d" },
+        "entidad": { "tipo": "cliente", "id": "01a1c0fc-ec8b-717e-847b-4e85bcc1626d", "nombre": "iam-admin-sistema" },
         "resultado": "ok",
         "motivo": null,
         "antes": null,

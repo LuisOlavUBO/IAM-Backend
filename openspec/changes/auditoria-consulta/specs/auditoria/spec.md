@@ -30,12 +30,12 @@
 - **THEN** la cantidad de filas de `iam_auditoria` no cambia
 
 ### Requirement: Forma de cada entrada
-Cada entrada SHALL traer `ocurrido_en` (ISO 8601), `actor` (`tipo`, `uuid`, `nombre` y `correo`), `accion`, `entidad` (`tipo` e `id`), `resultado`, `motivo`, `antes`, `despues` y `trace_id`. `antes` y `despues` MUST ir como objetos JSON o `null`. El `nombre` y el `correo` del actor MUST venir de Usuarios cuando el actor es una persona que existe, y ser `null` en otro caso.
+Cada entrada SHALL traer `ocurrido_en` (ISO 8601), `actor` (`tipo`, `uuid`, `nombre` y `correo`), `accion`, `entidad` (`tipo`, `id` y `nombre`), `resultado`, `motivo`, `antes`, `despues` y `trace_id`. `antes` y `despues` MUST ir como objetos JSON o `null`. El `nombre` y el `correo` del actor MUST venir de Usuarios cuando el actor es una persona que existe, y ser `null` en otro caso.
 
 #### Scenario: Acción de un comando
 - **GIVEN** la entrada `usuario.rol.asignacion` de `iam:install` sobre Ana, con `despues` igual a `{"rol": "iam-admin/administrador"}`
 - **WHEN** se pide el listado
-- **THEN** la entrada trae `actor` `{tipo: "comando", uuid: null, nombre: null, correo: null}`, `entidad` `{tipo: "usuario", id: <uuid de Ana>}`, `antes` `null` y `despues` `{rol: "iam-admin/administrador"}`
+- **THEN** la entrada trae `actor` `{tipo: "comando", uuid: null, nombre: null, correo: null}`, `entidad` `{tipo: "usuario", id: <uuid de Ana>, nombre: "Ana Pérez"}`, `antes` `null` y `despues` `{rol: "iam-admin/administrador"}`
 
 #### Scenario: Acción de una persona
 - **GIVEN** una entrada hecha desde el portal por Ana Pérez (`ana@ubo.cl`)
@@ -46,6 +46,24 @@ Cada entrada SHALL traer `ocurrido_en` (ISO 8601), `actor` (`tipo`, `uuid`, `nom
 - **GIVEN** una entrada de una persona cuyo `uuid` no está en `users`
 - **WHEN** se pide el listado
 - **THEN** la entrada trae su `uuid` con `nombre` y `correo` `null`
+
+### Requirement: Nombre de la entidad
+`entidad.nombre` SHALL ser el nombre actual de la entidad, obtenido del dominio dueño: el de la aplicación, el del rol con su aplicación (`aplicacion/rol`), el del permiso, el de la persona o el del cliente. MUST ser `null` cuando la entidad ya no existe o su tipo no tiene nombre conocido; `entidad.id` MUST seguir siendo el identificador guardado.
+
+#### Scenario: Rol registrado con su id numérico
+- **GIVEN** las entradas `rol.permiso.asignacion` sobre el rol 16, que es `mesa-de-ayuda` de `iam-admin`
+- **WHEN** se pide el listado
+- **THEN** cada una trae `entidad` `{tipo: "rol", id: "16", nombre: "iam-admin/mesa-de-ayuda"}`
+
+#### Scenario: Aplicación, permiso y cliente
+- **GIVEN** entradas sobre la aplicación `iam-admin`, el permiso `iam:usuarios.leer` y el cliente `iam-admin-sistema`
+- **WHEN** se pide el listado
+- **THEN** sus `entidad.nombre` son `iam-admin`, `iam:usuarios.leer` e `iam-admin-sistema`
+
+#### Scenario: Entidad borrada
+- **GIVEN** una entrada sobre un rol que ya no existe
+- **WHEN** se pide el listado
+- **THEN** la entrada trae su `entidad.id` con `entidad.nombre` `null`
 
 ### Requirement: Filtros de la auditoría
 El listado SHALL aceptar estos filtros, combinables: `desde` y `hasta` (fechas `AAAA-MM-DD`, ambos días incluidos, en la zona de la aplicación), `actor` (`uuid`), `accion` (prefijo del código, por ejemplo `cliente.`), `entidad_tipo` y `entidad_id` (exactos) y `resultado` (`ok` o `rechazado`). Un filtro inválido MUST responder 422 `VALIDACION`.

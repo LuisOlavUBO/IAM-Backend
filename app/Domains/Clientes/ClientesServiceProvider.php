@@ -2,8 +2,10 @@
 
 namespace App\Domains\Clientes;
 
+use App\Domains\Clientes\Contracts\IDirectorioClientesService;
 use App\Domains\Clientes\Domain\Interfaces\IClienteQueryRepository;
 use App\Domains\Clientes\Infrastructure\ClienteQueryRepository;
+use App\Domains\Clientes\Infrastructure\DirectorioClientesService;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -15,5 +17,6 @@ class ClientesServiceProvider extends ServiceProvider
     /** @var array<class-string, class-string> */
     public array $bindings = [
         IClienteQueryRepository::class => ClienteQueryRepository::class,
+        IDirectorioClientesService::class => DirectorioClientesService::class,
     ];
 }

@@ -12,5 +12,5 @@ Las carpetas `Domain/`, `Infrastructure/` y `Contracts/` de un dominio MUST exis
 - **THEN** su carpeta no tiene `Domain/` ni carpetas vacías
 
 #### Scenario: Dominio sin Contracts
-- **WHEN** ningún otro dominio usa un dominio, como Aplicaciones
+- **WHEN** ningún otro dominio usa un dominio, como Auditoria
 - **THEN** su carpeta no tiene `Contracts/`

@@ -214,7 +214,7 @@ routes/v1.php → VerUsuarioEndpoint → VerUsuarioQueryHandler → IUsuarioQuer
   con la entidad de `Domain/`, su `I<Entidad>Repository`, la transacción y `IAuditor`. Sin bus ni eventos.
 - Nombres al estilo .NET: `I…` interfaz, `…Dto`, `…Exception`, `…QueryRepository` / `…Repository`, `…Service`.
 - Las capas `Domain`, `Infrastructure` y `Contracts` se crean solo cuando tienen algo (Acceso no tiene
-  `Domain/`; Aplicaciones, Clientes y Auditoria no tienen `Contracts/`); las subcarpetas por tipo, cuando una carpeta pasa de unos diez archivos.
+  `Domain/`; Auditoria no tiene `Contracts/`); las subcarpetas por tipo, cuando una carpeta pasa de unos diez archivos.
 - Entre dominios solo se usa `Contracts/`; `Shared` no conoce dominios; un caso de uso no importa otro ni
   `Infrastructure`. `tests/Unit/ArquitecturaTest.php` lo verifica en cada `php artisan test`.
 - Un caso de uso nuevo se crea con:
