@@ -221,6 +221,73 @@ paths:
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '403': { $ref: '#/components/responses/AccesoDenegado' }
         '422': { $ref: '#/components/responses/Validacion' }
+    post:
+      tags: [Usuarios]
+      summary: Dar de alta una persona
+      description: |
+        Crea la persona sin roles, con el correo en minúsculas y sin espacios y el RUT normalizado (`12345678-K`). Con
+        `acceso` `microsoft` queda sin clave: API-Auth la vincula por correo en su primer login con Microsoft, así que el
+        correo debe ser el de su cuenta Microsoft. Con `clave` se genera una clave temporal que vence a las
+        `IAM_CLAVE_TEMPORAL_HORAS` horas y que API-Auth obliga a cambiar en el primer ingreso: va **solo en esta
+        respuesta** (`Cache-Control: no-store`) y nunca en logs ni en la auditoría. Queda en la auditoría como
+        `usuario.creacion` con `{nombre, correo, rut, acceso}`. Exige `iam:usuarios.administrar`.
+      operationId: crearUsuario
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, correo, acceso]
+              properties:
+                nombre: { type: string, maxLength: 255, example: Ana Pérez }
+                correo: { type: string, format: email, maxLength: 255, example: ana.perez@ubo.cl }
+                rut:
+                  type: [string, 'null']
+                  description: Opcional, con o sin puntos; se valida el dígito verificador (módulo 11).
+                  example: 12.345.678-5
+                acceso:
+                  type: string
+                  enum: [microsoft, clave]
+                  description: '`microsoft` (sin clave) o `clave` (clave temporal).'
+      responses:
+        '201':
+          description: Persona creada. La clave temporal, si la hay, no se vuelve a mostrar.
+          headers:
+            Cache-Control:
+              description: '`no-store`: ni el navegador ni un proxy guardan la respuesta.'
+              schema: { type: string, example: 'no-store, private' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PersonaCreada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '409':
+          description: Otra persona ya usa ese correo, sin distinguir mayúsculas (`CORREO_EN_USO`), o ese RUT (`RUT_EN_USO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              examples:
+                correo:
+                  value:
+                    type: about:blank
+                    title: Correo en uso
+                    status: 409
+                    detail: Otra persona ya usa ese correo.
+                    error: CORREO_EN_USO
+                rut:
+                  value:
+                    type: about:blank
+                    title: RUT en uso
+                    status: 409
+                    detail: Otra persona ya usa ese RUT.
+                    error: RUT_EN_USO
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
 
   /api/iam/v1/usuarios/{uuid}:
     get:
@@ -908,6 +975,25 @@ components:
             asignado:
               type: boolean
               description: '`true` si se asignó ahora; `false` si la persona ya lo tenía.'
+
+    PersonaCreada:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [uuid, clave_temporal]
+          properties:
+            uuid: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-1b2c3d4e5f60 }
+            clave_temporal:
+              description: Solo con `acceso` `clave`; `null` con `microsoft`. Se muestra una sola vez.
+              oneOf:
+                - type: 'null'
+                - type: object
+                  required: [clave, vence]
+                  properties:
+                    clave: { type: string, pattern: '^[A-Za-z2-9]{4}-[A-Za-z2-9]{4}-[A-Za-z2-9]{4}$', example: Xk7m-P2qr-9Wzt }
+                    vence: { type: string, format: date-time, example: '2026-11-13T12:00:00-03:00' }
 
     EntradaAuditoria:
       type: object

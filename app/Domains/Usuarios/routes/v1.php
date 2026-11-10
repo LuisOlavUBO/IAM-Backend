@@ -1,6 +1,7 @@
 <?php
 
 use App\Domains\Usuarios\Features\AsignarRol\AsignarRolEndpoint;
+use App\Domains\Usuarios\Features\CrearUsuario\CrearUsuarioEndpoint;
 use App\Domains\Usuarios\Features\ListarUsuarios\ListarUsuariosEndpoint;
 use App\Domains\Usuarios\Features\QuitarRol\QuitarRolEndpoint;
 use App\Domains\Usuarios\Features\RevocarSesiones\RevocarSesionesEndpoint;
@@ -16,6 +17,7 @@ Route::middleware('can:iam:usuarios.leer')->group(function () {
 });
 
 Route::middleware('can:iam:usuarios.administrar')->group(function () {
+    Route::post('usuarios', CrearUsuarioEndpoint::class)->name('usuarios.crear');
     Route::post('usuarios/{uuid}/roles', AsignarRolEndpoint::class)->name('usuarios.roles.asignar');
     Route::delete('usuarios/{uuid}/roles/{aplicacion}/{rol}', QuitarRolEndpoint::class)->name('usuarios.roles.quitar');
     Route::post('usuarios/{uuid}/sesiones/revocar', RevocarSesionesEndpoint::class)->name('usuarios.sesiones.revocar');

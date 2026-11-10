@@ -1,0 +1,50 @@
+meta {
+  name: Crear usuario
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/usuarios
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "nombre": "Ana Pérez",
+    "correo": "ana.perez@ubo.cl",
+    "rut": "12.345.678-5",
+    "acceso": "clave"
+  }
+}
+
+tests {
+  test("crea la persona", function () {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.uuid).to.be.a("string");
+    expect(res.headers["cache-control"]).to.contain("no-store");
+  });
+}
+
+docs {
+  # Crear usuario
+
+  `POST /api/iam/v1/usuarios` · sesión del portal · `iam:usuarios.administrar` · CSRF
+
+  Cuerpo `{ nombre, correo, rut?, acceso }`, con `acceso` `microsoft` (sin clave; API-Auth la vincula por correo en su primer login con Microsoft) o `clave` (clave temporal que API-Auth obliga a cambiar).
+
+  201 `{ "data": { "uuid": "…", "clave_temporal": { "clave": "Xk7m-P2qr-9Wzt", "vence": "…" } } }` con `Cache-Control: no-store`; `clave_temporal` es `null` con Microsoft. La clave se muestra **una sola vez** y no queda en la auditoría (`usuario.creacion` con `{nombre, correo, rut, acceso}`).
+
+  Crea una persona real que no se puede borrar: úselo solo contra una base de pruebas.
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 409 `CORREO_EN_USO` o `RUT_EN_USO`; 419 sin CSRF; 422 `VALIDACION` (mensajes en `errores.nombre`, `errores.correo`, `errores.rut`, `errores.acceso`).
+}
