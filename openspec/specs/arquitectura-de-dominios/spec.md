@@ -21,8 +21,12 @@ Las carpetas `Domain/`, `Infrastructure/` y `Contracts/` de un dominio MUST exis
 - **THEN** se obtiene `UsuarioQueryRepository` de `Usuarios/Infrastructure`, enlazado por `UsuariosServiceProvider`
 
 #### Scenario: Dominio sin capas vacías
-- **WHEN** un dominio todavía no tiene casos de uso, como Aplicaciones
+- **WHEN** un dominio todavía no tiene casos de uso, como Auditoria
 - **THEN** su carpeta contiene solo `routes/v1.php`, sin carpetas vacías
+
+#### Scenario: Dominio sin Contracts
+- **WHEN** ningún otro dominio usa un dominio, como Aplicaciones
+- **THEN** su carpeta no tiene `Contracts/`
 
 ### Requirement: Organización interna del núcleo
 `Domain/` SHALL guardar en su raíz las entidades, reglas y excepciones, los DTO en `Domain/Dto/` y las interfaces en `Domain/Interfaces/`. `Infrastructure/` y la raíz de `Domain/` MUST NOT tener subcarpetas por tipo hasta que pasen de unos diez archivos.
