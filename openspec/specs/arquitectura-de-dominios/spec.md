@@ -21,11 +21,11 @@ Las carpetas `Domain/`, `Infrastructure/` y `Contracts/` de un dominio MUST exis
 - **THEN** se obtiene `UsuarioQueryRepository` de `Usuarios/Infrastructure`, enlazado por `UsuariosServiceProvider`
 
 #### Scenario: Dominio sin capas vacías
-- **WHEN** un dominio todavía no tiene casos de uso, como Auditoria
-- **THEN** su carpeta contiene solo `routes/v1.php`, sin carpetas vacías
+- **WHEN** un dominio no tiene núcleo propio, como Acceso
+- **THEN** su carpeta no tiene `Domain/` ni carpetas vacías
 
 #### Scenario: Dominio sin Contracts
-- **WHEN** ningún otro dominio usa un dominio, como Aplicaciones
+- **WHEN** ningún otro dominio usa un dominio, como Auditoria
 - **THEN** su carpeta no tiene `Contracts/`
 
 ### Requirement: Organización interna del núcleo
