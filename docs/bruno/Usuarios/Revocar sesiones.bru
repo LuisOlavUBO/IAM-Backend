@@ -1,0 +1,39 @@
+meta {
+  name: Revocar sesiones
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/usuarios/{{usuarioUuid}}/sesiones/revocar
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  usuarioUuid: 0190f2a4-3c1e-7d2b-9a6f-1b2c3d4e5f60
+}
+
+tests {
+  test("API-Auth cerró las sesiones", function () {
+    expect(res.status).to.equal(204);
+  });
+}
+
+docs {
+  # Revocar sesiones
+
+  `POST /api/iam/v1/usuarios/{uuid}/sesiones/revocar` · sesión del portal · `iam:usuarios.administrar` · CSRF
+
+  Reintento cuando "Quitar rol" respondió `sesiones_revocadas: false`. 204 si API-Auth lo confirma (auditoría `usuario.sesiones.revocacion`).
+
+  ## Errores
+
+  401; 403 `ACCESO_DENEGADO` o `ACCION_SOBRE_SI_MISMO`; 404 `USUARIO_NO_ENCONTRADO`; 419 sin CSRF; 502 `REVOCACION_FALLIDA`.
+}

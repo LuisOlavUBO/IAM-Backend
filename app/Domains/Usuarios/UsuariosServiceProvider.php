@@ -3,8 +3,12 @@
 namespace App\Domains\Usuarios;
 
 use App\Domains\Usuarios\Contracts\IDirectorioUsuariosService;
+use App\Domains\Usuarios\Domain\Interfaces\IRevocadorDeSesiones;
+use App\Domains\Usuarios\Domain\Interfaces\IRolesDeUsuarioRepository;
 use App\Domains\Usuarios\Domain\Interfaces\IUsuarioQueryRepository;
+use App\Domains\Usuarios\Infrastructure\ApiAuthRevocadorDeSesiones;
 use App\Domains\Usuarios\Infrastructure\DirectorioUsuariosService;
+use App\Domains\Usuarios\Infrastructure\RolesDeUsuarioRepository;
 use App\Domains\Usuarios\Infrastructure\UsuarioQueryRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,5 +22,7 @@ class UsuariosServiceProvider extends ServiceProvider
     public array $bindings = [
         IUsuarioQueryRepository::class => UsuarioQueryRepository::class,
         IDirectorioUsuariosService::class => DirectorioUsuariosService::class,
+        IRolesDeUsuarioRepository::class => RolesDeUsuarioRepository::class,
+        IRevocadorDeSesiones::class => ApiAuthRevocadorDeSesiones::class,
     ];
 }

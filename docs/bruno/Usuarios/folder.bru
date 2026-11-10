@@ -4,5 +4,5 @@ meta {
 }
 
 docs {
-  Personas de IAM. Exigen la sesion del portal y el permiso iam:usuarios.leer: copiar la cookie de sesion a la variable sessionCookie del entorno (ver la carpeta Acceso).
+  Personas de IAM. Exigen la sesion del portal y el permiso iam:usuarios.leer (las que cambian datos, iam:usuarios.administrar): copiar la cookie de sesion a la variable sessionCookie del entorno (ver la carpeta Acceso). Las que cambian datos piden ademas el token CSRF: copiar el valor de la cookie XSRF-TOKEN, decodificado (%3D es =), a la variable xsrfToken.
 }

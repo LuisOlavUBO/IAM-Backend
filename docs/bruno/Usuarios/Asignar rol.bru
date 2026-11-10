@@ -1,0 +1,47 @@
+meta {
+  name: Asignar rol
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/usuarios/{{usuarioUuid}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "aplicacion": "pago-honorarios",
+    "rol": "revisor"
+  }
+}
+
+vars:pre-request {
+  usuarioUuid: 0190f2a4-3c1e-7d2b-9a6f-1b2c3d4e5f60
+}
+
+tests {
+  test("asigna el rol o ya lo tenía", function () {
+    expect([200, 201]).to.include(res.status);
+    expect(res.body.data.asignado).to.equal(res.status === 201);
+  });
+}
+
+docs {
+  # Asignar rol
+
+  `POST /api/iam/v1/usuarios/{uuid}/roles` · sesión del portal · `iam:usuarios.administrar` · CSRF
+
+  201 `{ "data": { "asignado": true } }` al asignarlo; 200 `{ "data": { "asignado": false } }` si ya lo tenía. Queda en la auditoría como `usuario.rol.asignacion`.
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`, `ESCALAMIENTO_DE_PRIVILEGIOS` (rol de `iam-admin` sin todos sus permisos) o `ACCION_SOBRE_SI_MISMO`; 404 `USUARIO_NO_ENCONTRADO`; 419 sin CSRF; 422 `VALIDACION` (rol inexistente en `errores.rol`).
+}

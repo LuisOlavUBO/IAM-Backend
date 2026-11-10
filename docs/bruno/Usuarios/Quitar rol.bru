@@ -1,0 +1,46 @@
+meta {
+  name: Quitar rol
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/iam/v1/usuarios/{{usuarioUuid}}/roles/pago-honorarios/revisor
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  usuarioUuid: 0190f2a4-3c1e-7d2b-9a6f-1b2c3d4e5f60
+}
+
+tests {
+  test("quita el rol e informa la revocación", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.sesiones_revocadas).to.be.a("boolean");
+  });
+}
+
+docs {
+  # Quitar rol
+
+  `DELETE /api/iam/v1/usuarios/{uuid}/roles/{aplicacion}/{rol}` · sesión del portal · `iam:usuarios.administrar` · CSRF
+
+  Quita el rol (auditoría `usuario.rol.retiro`) y después pide a API-Auth cerrar las sesiones de la persona.
+
+  ```json
+  { "data": { "sesiones_revocadas": true } }
+  ```
+
+  Con `false`, el rol quedó quitado pero API-Auth no confirmó: reintentar con "Revocar sesiones".
+
+  ## Errores
+
+  401; 403 `ACCESO_DENEGADO`, `ESCALAMIENTO_DE_PRIVILEGIOS` o `ACCION_SOBRE_SI_MISMO`; 404 `USUARIO_NO_ENCONTRADO` o `ROL_NO_ASIGNADO`; 409 `ULTIMO_ADMINISTRADOR`; 419 sin CSRF.
+}

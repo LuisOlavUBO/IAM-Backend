@@ -28,6 +28,11 @@ info:
     | `USUARIO_NO_ENCONTRADO` | 404 | No existe una persona con ese `uuid` |
     | `APLICACION_NO_ENCONTRADA` | 404 | No existe una aplicación con ese nombre |
     | `CLIENTE_NO_ENCONTRADO` | 404 | No existe un cliente OAuth con ese id |
+    | `ROL_NO_ASIGNADO` | 404 | La persona no tiene ese rol |
+    | `ESCALAMIENTO_DE_PRIVILEGIOS` | 403 | Asignar o quitar un rol de `iam-admin` sin todos los permisos de `iam-admin` |
+    | `ACCION_SOBRE_SI_MISMO` | 403 | Cambiar los propios roles o cerrar las propias sesiones |
+    | `ULTIMO_ADMINISTRADOR` | 409 | Quitar `iam-admin/administrador` a la última persona activa que lo tiene |
+    | `REVOCACION_FALLIDA` | 502 | API-Auth no confirmó el cierre de las sesiones; se puede reintentar |
     | `RUTA_NO_ENCONTRADA` / `METODO_NO_PERMITIDO` | 404 / 405 | La ruta o el método no existen |
     | `ERROR_INTERNO` | 500 | Error inesperado; el detalle queda solo en el log |
 
@@ -254,6 +259,143 @@ paths:
                 status: 404
                 detail: No existe una persona con ese identificador.
                 error: USUARIO_NO_ENCONTRADO
+
+  /api/iam/v1/usuarios/{uuid}/roles:
+    post:
+      tags: [Usuarios]
+      summary: Asignar un rol a una persona
+      description: |
+        Asigna el rol y lo registra en la auditoría (`usuario.rol.asignacion`). No cierra las sesiones: el rol rige
+        cuando la persona renueva su token. Los roles de `iam-admin` exigen todos los permisos de `iam-admin`; nadie
+        cambia sus propios roles. Cada rechazo queda en la auditoría.
+      operationId: asignarRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/UuidPersona'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aplicacion, rol]
+              properties:
+                aplicacion: { type: string, maxLength: 100, example: pago-honorarios }
+                rol: { type: string, maxLength: 100, example: revisor }
+      responses:
+        '201':
+          description: Rol asignado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoAsignacion' }
+        '200':
+          description: La persona ya tenía el rol; no cambió nada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoAsignacion' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/RechazoDeRoles' }
+        '404': { $ref: '#/components/responses/UsuarioNoEncontrado' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/usuarios/{uuid}/roles/{aplicacion}/{rol}:
+    delete:
+      tags: [Usuarios]
+      summary: Quitar un rol a una persona
+      description: |
+        Quita el rol, lo registra en la auditoría (`usuario.rol.retiro`) y después pide a API-Auth cerrar las sesiones
+        de la persona. Si API-Auth falla, el rol queda quitado y `sesiones_revocadas` es `false`: se reintenta con
+        `POST /usuarios/{uuid}/sesiones/revocar`.
+      operationId: quitarRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/UuidPersona'
+        - name: aplicacion
+          in: path
+          required: true
+          schema: { type: string, example: pago-honorarios }
+        - name: rol
+          in: path
+          required: true
+          schema: { type: string, example: revisor }
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: Rol quitado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [sesiones_revocadas]
+                    properties:
+                      sesiones_revocadas:
+                        type: boolean
+                        description: API-Auth confirmó el cierre de las sesiones de la persona.
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/RechazoDeRoles' }
+        '404':
+          description: No existe la persona (`USUARIO_NO_ENCONTRADO`) o no tiene ese rol (`ROL_NO_ASIGNADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Rol no asignado
+                status: 404
+                detail: La persona no tiene ese rol.
+                error: ROL_NO_ASIGNADO
+        '409':
+          description: Es la última persona activa con `iam-admin/administrador` (`ULTIMO_ADMINISTRADOR`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Último administrador
+                status: 409
+                detail: 'Es la última persona activa con iam-admin/administrador: asigne el rol a otra persona antes de quitárselo.'
+                error: ULTIMO_ADMINISTRADOR
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/usuarios/{uuid}/sesiones/revocar:
+    post:
+      tags: [Usuarios]
+      summary: Cerrar las sesiones de una persona
+      description: |
+        Pide a API-Auth cerrar todas las sesiones de la persona; es el reintento cuando un retiro de rol respondió
+        `sesiones_revocadas` `false`. Se audita (`usuario.sesiones.revocacion`) solo si API-Auth lo confirma.
+      operationId: revocarSesiones
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/UuidPersona'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          description: API-Auth cerró las sesiones.
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/RechazoDeRoles' }
+        '404': { $ref: '#/components/responses/UsuarioNoEncontrado' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '502':
+          description: API-Auth no confirmó el cierre (`REVOCACION_FALLIDA`); se puede reintentar.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Revocación fallida
+                status: 502
+                detail: IAM no confirmó el cierre de las sesiones. Intente de nuevo en unos minutos.
+                error: REVOCACION_FALLIDA
 
   /api/iam/v1/aplicaciones:
     get:
@@ -527,6 +669,20 @@ components:
       name: api-iam-session
       description: Cookie de sesión del portal, que se obtiene con el login. Su nombre real es el de `SESSION_COOKIE`.
 
+  parameters:
+    UuidPersona:
+      name: uuid
+      in: path
+      required: true
+      description: Identificador público de la persona (sin distinguir mayúsculas).
+      schema: { type: string, format: uuid }
+    XsrfToken:
+      name: X-XSRF-TOKEN
+      in: header
+      required: true
+      description: Token CSRF, tomado de la cookie `XSRF-TOKEN` (Angular lo envía solo).
+      schema: { type: string }
+
   schemas:
     Problema:
       type: object
@@ -741,6 +897,18 @@ components:
               nombre: { type: string, example: introspector }
               descripcion: { type: [string, 'null'] }
 
+    ResultadoAsignacion:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [asignado]
+          properties:
+            asignado:
+              type: boolean
+              description: '`true` si se asignó ahora; `false` si la persona ya lo tenía.'
+
     EntradaAuditoria:
       type: object
       required: [ocurrido_en, actor, accion, entidad, resultado, motivo, antes, despues, trace_id]
@@ -808,6 +976,27 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problema' }
+    RechazoDeRoles:
+      description: |
+        Sin el permiso de la ruta (`ACCESO_DENEGADO`), un rol de `iam-admin` sin todos los permisos de `iam-admin`
+        (`ESCALAMIENTO_DE_PRIVILEGIOS`) o una acción sobre uno mismo (`ACCION_SOBRE_SI_MISMO`). Los dos últimos quedan
+        en la auditoría como `rechazado`.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: Escalamiento de privilegios
+            status: 403
+            detail: Para asignar o quitar roles de iam-admin necesita todos los permisos de iam-admin.
+            error: ESCALAMIENTO_DE_PRIVILEGIOS
+    UsuarioNoEncontrado:
+      description: No existe una persona con ese `uuid`, o no tiene formato de UUID (`USUARIO_NO_ENCONTRADO`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    Csrf:
+      description: Falta el token CSRF (header `X-XSRF-TOKEN`) o no es válido.
     Validacion:
       description: Datos inválidos (`VALIDACION`), con los mensajes por campo en `errores`.
       content:
