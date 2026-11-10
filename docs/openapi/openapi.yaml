@@ -26,6 +26,8 @@ info:
     | `ACCESO_DENEGADO` | 403 | La persona no tiene el permiso `iam:*` que exige la ruta |
     | `VALIDACION` | 422 | Datos inválidos; los mensajes por campo van en `errores` |
     | `USUARIO_NO_ENCONTRADO` | 404 | No existe una persona con ese `uuid` |
+    | `APLICACION_NO_ENCONTRADA` | 404 | No existe una aplicación con ese nombre |
+    | `CLIENTE_NO_ENCONTRADO` | 404 | No existe un cliente OAuth con ese id |
     | `RUTA_NO_ENCONTRADA` / `METODO_NO_PERMITIDO` | 404 / 405 | La ruta o el método no existen |
     | `ERROR_INTERNO` | 500 | Error inesperado; el detalle queda solo en el log |
 
@@ -46,6 +48,8 @@ tags:
     description: Personas de IAM. Consulta con el permiso `iam:usuarios.leer`.
   - name: Aplicaciones
     description: Sistemas registrados en IAM, con sus permisos y roles. Consulta con el permiso `iam:aplicaciones.leer`.
+  - name: Clientes
+    description: Clientes OAuth, con sus redirecciones y roles. Consulta con el permiso `iam:clientes.leer`. Nunca exponen el secreto.
   - name: Salud
     description: Estado del servicio.
 
@@ -329,6 +333,88 @@ paths:
                 detail: No existe una aplicación con ese nombre.
                 error: APLICACION_NO_ENCONTRADA
 
+  /api/iam/v1/clientes:
+    get:
+      tags: [Clientes]
+      summary: Listar clientes OAuth
+      description: |
+        Clientes OAuth ordenados por nombre (y luego por id), paginados, con su aplicación, si están revocados y
+        cuántos roles tienen. Incluye los revocados. `buscar` filtra por el nombre del cliente o de su aplicación
+        (sin distinguir mayúsculas); si es un UUID, trae además el cliente con ese id. Nunca incluye el secreto.
+      operationId: listarClientes
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: buscar
+          in: query
+          required: false
+          description: Parte del nombre del cliente o de su aplicación, o el id completo.
+          schema: { type: string, maxLength: 100 }
+        - name: pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: por_pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Una página de clientes.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ClienteResumen' }
+                  meta: { $ref: '#/components/schemas/MetaPaginacion' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/clientes/{id}:
+    get:
+      tags: [Clientes]
+      summary: Ver un cliente OAuth
+      description: |
+        El cliente con sus concesiones, sus redirecciones, si es confidencial y sus roles (con la aplicación de cada
+        rol, que puede ser distinta de la del cliente). Nunca incluye el secreto ni su hash.
+      operationId: verCliente
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del cliente (el `client_id` OAuth, sin distinguir mayúsculas).
+          schema: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b }
+      responses:
+        '200':
+          description: El cliente.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ClienteDetalle' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: El id no es un UUID o no existe un cliente con ese id (`CLIENTE_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Cliente no encontrado
+                status: 404
+                detail: No existe un cliente con ese id.
+                error: CLIENTE_NO_ENCONTRADO
+
   /api/iam/v1/salud:
     get:
       tags: [Salud]
@@ -528,6 +614,61 @@ components:
                 description: Nombres de los permisos que da el rol, ordenados.
                 items: { type: string }
                 example: ['iam:aplicaciones.leer', 'iam:usuarios.administrar', 'iam:usuarios.leer']
+
+    ClienteResumen:
+      type: object
+      required: [id, nombre, aplicacion, revocado, roles]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: El `client_id` OAuth, en minúsculas; identifica al cliente en la URL.
+        nombre: { type: string, example: iam-admin-portal }
+        aplicacion:
+          type: string
+          description: Nombre de la aplicación a la que pertenece.
+          example: iam-admin
+        revocado: { type: boolean }
+        roles:
+          type: integer
+          description: Cantidad de roles asignados.
+          example: 0
+
+    ClienteDetalle:
+      type: object
+      required: [id, nombre, aplicacion, concesiones, confidencial, redirecciones, revocado, creado, actualizado, roles]
+      properties:
+        id: { type: string, format: uuid }
+        nombre: { type: string, example: iam-admin-sistema }
+        aplicacion: { type: string, example: iam-admin }
+        concesiones:
+          type: array
+          description: Tipos de concesión OAuth (`grant_types`) que puede usar.
+          items: { type: string }
+          example: [client_credentials]
+        confidencial:
+          type: boolean
+          description: Tiene secreto (sin revelarlo).
+        redirecciones:
+          type: array
+          description: Direcciones a las que puede volver tras el login (clientes authorization-code).
+          items: { type: string, format: uri }
+        revocado: { type: boolean }
+        creado: { type: [string, 'null'], format: date-time }
+        actualizado: { type: [string, 'null'], format: date-time }
+        roles:
+          type: array
+          description: Roles asignados, ordenados por aplicación y nombre.
+          items:
+            type: object
+            required: [aplicacion, nombre, descripcion]
+            properties:
+              aplicacion:
+                type: string
+                description: Aplicación del rol; puede ser distinta de la del cliente.
+                example: api-auth
+              nombre: { type: string, example: introspector }
+              descripcion: { type: [string, 'null'] }
 
   responses:
     NoAutenticado:

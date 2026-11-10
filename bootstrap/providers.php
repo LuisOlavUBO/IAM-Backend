@@ -1,6 +1,7 @@
 <?php
 
 use App\Domains\Aplicaciones\AplicacionesServiceProvider;
+use App\Domains\Clientes\ClientesServiceProvider;
 use App\Domains\Usuarios\UsuariosServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Shared\SharedServiceProvider;
@@ -9,5 +10,6 @@ return [
     AppServiceProvider::class,
     SharedServiceProvider::class,
     AplicacionesServiceProvider::class,
+    ClientesServiceProvider::class,
     UsuariosServiceProvider::class,
 ];

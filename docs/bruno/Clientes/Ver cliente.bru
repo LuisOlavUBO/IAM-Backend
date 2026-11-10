@@ -1,0 +1,57 @@
+meta {
+  name: Ver cliente
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/iam/v1/clientes/{{clienteId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+tests {
+  test("trae el cliente con sus roles y sin secreto", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.roles).to.be.an("array");
+    expect(res.body.data.confidencial).to.be.a("boolean");
+    expect(res.body.data).to.not.have.property("secret");
+  });
+}
+
+docs {
+  # Ver cliente
+
+  `GET /api/iam/v1/clientes/{id}` · sesión del portal · `iam:clientes.leer`
+
+  `clienteId` lo deja "Listar clientes" (el primero de la lista).
+
+  ## Respuesta 200
+
+  ```json
+  {
+    "data": {
+      "id": "0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b",
+      "nombre": "iam-admin-sistema",
+      "aplicacion": "iam-admin",
+      "concesiones": ["client_credentials"],
+      "confidencial": true,
+      "redirecciones": [],
+      "revocado": false,
+      "creado": "2026-11-09T10:00:00+00:00",
+      "actualizado": "2026-11-09T10:00:00+00:00",
+      "roles": [
+        { "aplicacion": "api-auth", "nombre": "introspector", "descripcion": "Services that validate user tokens through /introspect" }
+      ]
+    }
+  }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`, 403 `ACCESO_DENEGADO`, 404 `CLIENTE_NO_ENCONTRADO`.
+}
