@@ -1,0 +1,70 @@
+meta {
+  name: Listar auditoria
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/iam/v1/auditoria?accion=&resultado=&pagina=1&por_pagina=20
+  body: none
+  auth: none
+}
+
+params:query {
+  accion:
+  resultado:
+  pagina: 1
+  por_pagina: 20
+  ~desde: 2026-11-09
+  ~hasta: 2026-11-10
+  ~actor:
+  ~entidad_tipo: cliente
+  ~entidad_id:
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+tests {
+  test("lista la auditoría, más recientes primero", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.be.an("array");
+    expect(res.body.meta).to.have.all.keys("total", "pagina", "por_pagina");
+    const fechas = res.body.data.map((e) => e.ocurrido_en);
+    expect(fechas).to.deep.equal([...fechas].sort().reverse());
+  });
+}
+
+docs {
+  # Listar auditoría
+
+  `GET /api/iam/v1/auditoria` · sesión del portal · `iam:auditoria.leer`
+
+  Filtros combinables: `desde` y `hasta` (días incluidos), `actor` (uuid), `accion` (prefijo, como `cliente.`), `entidad_tipo` y `entidad_id` (exactos) y `resultado` (`ok` o `rechazado`).
+
+  ## Respuesta 200
+
+  ```json
+  {
+    "data": [
+      {
+        "ocurrido_en": "2026-11-09T15:46:37+00:00",
+        "actor": { "tipo": "comando", "uuid": null, "nombre": null, "correo": null },
+        "accion": "cliente.rol.asignacion",
+        "entidad": { "tipo": "cliente", "id": "01a1c0fc-ec8b-717e-847b-4e85bcc1626d" },
+        "resultado": "ok",
+        "motivo": null,
+        "antes": null,
+        "despues": { "rol": "api-auth/introspector" },
+        "trace_id": "e9c41bd0b410027a6c0bf678b9e566f7"
+      }
+    ],
+    "meta": { "total": 1, "pagina": 1, "por_pagina": 20 }
+  }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`, 403 `ACCESO_DENEGADO`, 422 `VALIDACION`.
+}

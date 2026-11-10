@@ -50,6 +50,8 @@ tags:
     description: Sistemas registrados en IAM, con sus permisos y roles. Consulta con el permiso `iam:aplicaciones.leer`.
   - name: Clientes
     description: Clientes OAuth, con sus redirecciones y roles. Consulta con el permiso `iam:clientes.leer`. Nunca exponen el secreto.
+  - name: Auditoria
+    description: Registro de las acciones de administración de IAM. Consulta con el permiso `iam:auditoria.leer`.
   - name: Salud
     description: Estado del servicio.
 
@@ -415,6 +417,75 @@ paths:
                 detail: No existe un cliente con ese id.
                 error: CLIENTE_NO_ENCONTRADO
 
+  /api/iam/v1/auditoria:
+    get:
+      tags: [Auditoria]
+      summary: Consultar la auditoría
+      description: |
+        Entradas del registro de auditoría, de la más reciente a la más antigua, paginadas. Los filtros se combinan.
+        El nombre y el correo del actor vienen de Usuarios mientras la persona exista. Consultar la auditoría no
+        escribe en la base.
+      operationId: listarAuditoria
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: desde
+          in: query
+          required: false
+          description: Primer día incluido (zona de la aplicación).
+          schema: { type: string, format: date, example: '2026-11-09' }
+        - name: hasta
+          in: query
+          required: false
+          description: Último día incluido (zona de la aplicación); no puede ser anterior a `desde`.
+          schema: { type: string, format: date, example: '2026-11-10' }
+        - name: actor
+          in: query
+          required: false
+          description: '`uuid` de la persona que hizo la acción.'
+          schema: { type: string, format: uuid }
+        - name: accion
+          in: query
+          required: false
+          description: Prefijo del código de acción, por ejemplo `cliente.`.
+          schema: { type: string, maxLength: 100 }
+        - name: entidad_tipo
+          in: query
+          required: false
+          schema: { type: string, maxLength: 50, example: cliente }
+        - name: entidad_id
+          in: query
+          required: false
+          schema: { type: string, maxLength: 100 }
+        - name: resultado
+          in: query
+          required: false
+          schema: { type: string, enum: [ok, rechazado] }
+        - name: pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: por_pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Una página de entradas.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/EntradaAuditoria' }
+                  meta: { $ref: '#/components/schemas/MetaPaginacion' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
   /api/iam/v1/salud:
     get:
       tags: [Salud]
@@ -669,6 +740,49 @@ components:
                 example: api-auth
               nombre: { type: string, example: introspector }
               descripcion: { type: [string, 'null'] }
+
+    EntradaAuditoria:
+      type: object
+      required: [ocurrido_en, actor, accion, entidad, resultado, motivo, antes, despues, trace_id]
+      properties:
+        ocurrido_en: { type: string, format: date-time }
+        actor:
+          type: object
+          required: [tipo, uuid, nombre, correo]
+          properties:
+            tipo: { type: string, enum: [persona, comando] }
+            uuid: { type: [string, 'null'], format: uuid }
+            nombre:
+              type: [string, 'null']
+              description: Nombre de la persona, si existe en IAM.
+            correo: { type: [string, 'null'], format: email }
+        accion:
+          type: string
+          description: Código estable de la acción.
+          example: cliente.secreto.rotacion
+        entidad:
+          type: object
+          required: [tipo, id]
+          properties:
+            tipo: { type: string, example: cliente }
+            id:
+              type: string
+              description: '`uuid` para usuario y cliente; id numérico para aplicación, rol y permiso.'
+        resultado: { type: string, enum: [ok, rechazado] }
+        motivo:
+          type: [string, 'null']
+          description: Código del motivo de un intento rechazado.
+          example: ESCALAMIENTO_DE_PRIVILEGIOS
+        antes:
+          type: [object, 'null']
+          description: Campos auditables antes de la acción. Nunca contiene secretos.
+        despues:
+          type: [object, 'null']
+          description: Campos auditables después de la acción. Nunca contiene secretos.
+          example: { rol: iam-admin/administrador }
+        trace_id:
+          type: [string, 'null']
+          description: '`trace_id` de la petición o del comando.'
 
   responses:
     NoAutenticado:

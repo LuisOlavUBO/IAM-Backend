@@ -10,4 +10,12 @@ interface IDirectorioUsuariosService
 {
     /** The person's name and email, or null when no person has that uuid (lowercase). */
     public function persona(string $uuid): ?PersonaBasicaDto;
+
+    /**
+     * Several people in one query, keyed by their lowercase uuid. Unknown uuids are left out.
+     *
+     * @param  list<string>  $uuids
+     * @return array<string, PersonaBasicaDto>
+     */
+    public function personas(array $uuids): array;
 }
