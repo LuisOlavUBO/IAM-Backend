@@ -1,7 +1,7 @@
 # aplicaciones Specification
 
 ## Purpose
-TBD - created by archiving change aplicaciones-consulta. Update Purpose after archive.
+Define cómo el portal consulta las aplicaciones registradas en IAM: el listado con búsqueda y el detalle de cada aplicación con sus permisos y sus roles, y qué permisos da cada rol, sin exponer identificadores internos ni escribir en la base.
 
 ## Requirements
 
