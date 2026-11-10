@@ -42,11 +42,15 @@ Los comandos `iam:*` MUST NOT tener una ruta web ni un asistente de instalación
 - **THEN** `api-auth/admin` conserva ese permiso
 
 ### Requirement: Aplicación iam-admin
-`iam:install` SHALL crear la aplicación `iam-admin` con los permisos `iam:usuarios.leer`, `iam:usuarios.administrar`, `iam:catalogo.leer`, `iam:catalogo.administrar`, `iam:clientes.leer`, `iam:clientes.administrar` e `iam:auditoria.leer`; el rol `administrador`, que da los siete, y el rol `mesa-de-ayuda`, que da `iam:usuarios.leer`, `iam:usuarios.administrar` e `iam:catalogo.leer`.
+`iam:install` SHALL crear la aplicación `iam-admin` con los permisos `iam:usuarios.leer`, `iam:usuarios.administrar`, `iam:aplicaciones.leer`, `iam:aplicaciones.administrar`, `iam:clientes.leer`, `iam:clientes.administrar` e `iam:auditoria.leer`; el rol `administrador`, que da los siete, y el rol `mesa-de-ayuda`, que da `iam:usuarios.leer`, `iam:usuarios.administrar` e `iam:aplicaciones.leer`.
 
 #### Scenario: Roles del portal
 - **WHEN** termina `iam:install`
-- **THEN** `iam-admin/administrador` da los siete permisos `iam:*` y `iam-admin/mesa-de-ayuda` da exactamente `iam:usuarios.leer`, `iam:usuarios.administrar` e `iam:catalogo.leer`
+- **THEN** `iam-admin/administrador` da los siete permisos `iam:*` y `iam-admin/mesa-de-ayuda` da exactamente `iam:usuarios.leer`, `iam:usuarios.administrar` e `iam:aplicaciones.leer`
+
+#### Scenario: Sin permisos de Catálogo
+- **WHEN** termina `iam:install`
+- **THEN** no existe ningún permiso `iam:catalogo.*`
 
 ### Requirement: Clientes de API-IAM
 `iam:install` SHALL crear un cliente `authorization-code` del portal, de `iam-admin`, con las redirecciones indicadas en `--redirect` (al menos una, cada una absoluta y `https`, salvo `localhost`), y un cliente `client-credentials` de `iam-admin` con los roles `api-auth/session-revoker` y `api-auth/introspector`. Sus secretos MUST guardarse con hash bcrypt.

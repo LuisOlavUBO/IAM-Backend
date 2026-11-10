@@ -21,7 +21,7 @@ Las carpetas `Domain/`, `Infrastructure/` y `Contracts/` de un dominio MUST exis
 - **THEN** se obtiene `UsuarioQueryRepository` de `Usuarios/Infrastructure`, enlazado por `UsuariosServiceProvider`
 
 #### Scenario: Dominio sin capas vacías
-- **WHEN** un dominio todavía no tiene casos de uso, como Catálogo
+- **WHEN** un dominio todavía no tiene casos de uso, como Aplicaciones
 - **THEN** su carpeta contiene solo `routes/v1.php`, sin carpetas vacías
 
 ### Requirement: Organización interna del núcleo
@@ -47,7 +47,7 @@ Las dependencias SHALL ir hacia adentro: `Features` puede usar `Domain`, `Contra
 Un dominio MUST depender de otro solo a través de la carpeta `Contracts/` del otro. MUST NOT importar sus `Features`, `Domain` ni `Infrastructure`. `app/Shared` MUST NOT depender de ningún dominio.
 
 #### Scenario: Dominio que usa el modelo de otro
-- **GIVEN** una clase de `Domains/Catalogo` que importa una clase de `Domains/Usuarios/Domain`
+- **GIVEN** una clase de `Domains/Aplicaciones` que importa una clase de `Domains/Usuarios/Domain`
 - **WHEN** se ejecuta el test de arquitectura
 - **THEN** el test falla nombrando el archivo y la dependencia prohibida
 
@@ -107,11 +107,11 @@ Un test de arquitectura SHALL recorrer `app/` y fallar, nombrando el archivo y l
 `php artisan iam:make-feature <Dominio> <CasoDeUso>` SHALL crear `app/Domains/<Dominio>/Features/<CasoDeUso>/` con el endpoint, el request, el handler (`<CasoDeUso>QueryHandler`, o `<CasoDeUso>CommandHandler` con `--command`) y el resource, más un test de feature en `tests/Feature/<Dominio>/<CasoDeUso>Test.php`, y mostrar la línea de ruta que hay que agregar. MUST negarse a sobrescribir archivos existentes y a aceptar nombres que no sean PascalCase.
 
 #### Scenario: Caso de uso nuevo
-- **WHEN** se ejecuta `php artisan iam:make-feature Catalogo ListarAplicaciones`
-- **THEN** se crean `ListarAplicacionesEndpoint`, `ListarAplicacionesRequest`, `ListarAplicacionesQueryHandler`, `ListarAplicacionesResource` y su test, el código generado pasa Pint y el test de arquitectura, y la consola muestra `Route::get(..., ListarAplicacionesEndpoint::class)` para copiar en `app/Domains/Catalogo/routes/v1.php`
+- **WHEN** se ejecuta `php artisan iam:make-feature Aplicaciones ListarAplicaciones`
+- **THEN** se crean `ListarAplicacionesEndpoint`, `ListarAplicacionesRequest`, `ListarAplicacionesQueryHandler`, `ListarAplicacionesResource` y su test, el código generado pasa Pint y el test de arquitectura, y la consola muestra `Route::get(..., ListarAplicacionesEndpoint::class)` para copiar en `app/Domains/Aplicaciones/routes/v1.php`
 
 #### Scenario: Caso de uso que escribe
-- **WHEN** se ejecuta `php artisan iam:make-feature Catalogo CrearAplicacion --command`
+- **WHEN** se ejecuta `php artisan iam:make-feature Aplicaciones CrearAplicacion --command`
 - **THEN** se crea `CrearAplicacionCommandHandler` en vez de un `QueryHandler`, y el endpoint generado lo recibe
 
 #### Scenario: Caso de uso que ya existe
