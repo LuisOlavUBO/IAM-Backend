@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Rules\Rut;
+use App\Shared\Rut\Rut;
 use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -40,5 +40,14 @@ class RutTest extends TestCase
         $this->assertTrue(Validator::make(['rut' => '12345678-5'], ['rut' => new Rut])->passes());
         $this->assertFalse(Validator::make(['rut' => '12345678-4'], ['rut' => new Rut])->passes());
         $this->assertFalse(Validator::make(['rut' => '12.345.678-5'], ['rut' => new Rut])->passes());
+    }
+
+    public function test_es_valido_answers_like_the_rule_for_a_normalized_rut(): void
+    {
+        $this->assertTrue(Rut::esValido('12345678-5'));
+        $this->assertTrue(Rut::esValido('10000013-K'));
+        $this->assertFalse(Rut::esValido('12345678-4'));
+        $this->assertFalse(Rut::esValido('12.345.678-5'));
+        $this->assertFalse(Rut::esValido('ana'));
     }
 }

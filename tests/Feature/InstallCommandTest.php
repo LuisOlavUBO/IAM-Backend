@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Console\Commands\InstallCommand;
-use App\Domains\Auditoria\Auditoria;
+use App\Shared\Auditoria\AuditorBaseDatos;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -183,7 +183,7 @@ class InstallCommandTest extends TestCase
 
     public function test_a_failure_halfway_leaves_the_database_as_it_was_and_shows_no_secret(): void
     {
-        $this->partialMock(Auditoria::class, function ($mock) {
+        $this->partialMock(AuditorBaseDatos::class, function ($mock) {
             $mock->shouldReceive('registrar')->andReturnUsing(function (string $accion) {
                 if ($accion === 'usuario.rol.asignacion') {
                     throw new RuntimeException('falla a mitad de la instalación');

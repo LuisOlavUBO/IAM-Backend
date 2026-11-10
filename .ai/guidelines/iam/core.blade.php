@@ -17,6 +17,16 @@
 - Errores en RFC 9457 con `ubo/common` (Problems), con códigos estables en mayúsculas (`RUTA_NO_ENCONTRADA`).
 - `uuid` de usuarios en minúsculas: SQL Server devuelve los `uniqueidentifier` en mayúsculas.
 
+## Arquitectura
+- Monolito modular por dominio, CQRS lite y un caso de uso por carpeta (spec `arquitectura-de-dominios`): `app/Domains/<Dominio>/Features/<CasoDeUso>/` con `<CasoDeUso>Endpoint` (invocable, solo HTTP), `<CasoDeUso>Request`, `<CasoDeUso>QueryHandler` (lee) o `<CasoDeUso>CommandHandler` (escribe) y `<CasoDeUso>Resource`. El handler recibe datos tipados, nunca el request. Sin bus ni eventos.
+- Crear un caso de uso con `php artisan iam:make-feature <Dominio> <CasoDeUso>` (`--command` si escribe) y agregar la línea de ruta que muestra en `routes/v1.php` del dominio.
+- Capas opcionales del dominio, solo si tienen algo: `Domain/` (el núcleo, sin HTTP ni SQL: entidades, reglas y excepciones en la raíz, DTO en `Domain/Dto/`, interfaces en `Domain/Interfaces/`), `Infrastructure/` (implementaciones: SQL, API-Auth) y `Contracts/` (lo único que otros dominios pueden usar). Cada dominio enlaza interfaz → implementación en su `ServiceProvider` (`bootstrap/providers.php`).
+- Nombres: negocio en español y rol en inglés al estilo .NET: `I…` (interfaz), `…Dto` (`final readonly`), `…Exception`, `…QueryRepository` (lectura) / `…Repository` (escritura), `…Service` (lo que un dominio ofrece a otros). Subcarpetas por tipo solo cuando una carpeta pasa de unos diez archivos.
+- Lo que usa un solo caso de uso vive en su carpeta; sube a `Domain/` cuando lo usa un segundo.
+- `app/Shared` solo para lo que usan varios dominios: `Paginacion` (`Pagina` y `RespuestaPaginada`), `Rut` y `Auditoria` (`IAuditor`).
+- Dependencias: un caso de uso no importa otro caso de uso ni `Infrastructure`; `Domain` no importa `Features`, `Infrastructure`, `Contracts` ni HTTP; entre dominios, solo `Contracts/`; `Shared` no conoce dominios; `app/Console` no importa `Infrastructure`. Lo verifica `tests/Unit/ArquitecturaTest.php`.
+- Lecturas por un `I<Entidad>QueryRepository` que selecciona solo las columnas de la respuesta y devuelve DTO; las interfaces no exponen tipos de paginación de Laravel.
+
 ## Pruebas
 - Contra SQL Server en Docker (`docker compose --profile tests up -d sqlserver sqlserver-init`, base `IAM_test`), nunca contra la base remota de desarrollo.
 

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domains\Auditoria\Auditoria;
+use App\Shared\Auditoria\IAuditor;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 #[Description('Acceso de emergencia: da el rol iam-admin/administrador a una persona existente')]
 class GrantAdminCommand extends Command
 {
-    public function __construct(private readonly Auditoria $auditoria)
+    public function __construct(private readonly IAuditor $auditoria)
     {
         parent::__construct();
     }

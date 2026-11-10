@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Domains\Auditoria\Auditoria;
+use App\Shared\Auditoria\IAuditor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -34,7 +34,7 @@ class AuditoriaTest extends TestCase
 
     public function test_an_action_of_a_command_is_recorded(): void
     {
-        DB::transaction(fn () => app(Auditoria::class)->registrar(
+        DB::transaction(fn () => app(IAuditor::class)->registrar(
             'usuario.rol.asignacion.emergencia', 'usuario', self::ANA, null, ['rol' => 'iam-admin/administrador'],
         ));
 
@@ -54,7 +54,7 @@ class AuditoriaTest extends TestCase
     {
         UboLogin::actingAs(id: self::ANA, roles: ['administrador']);
 
-        DB::transaction(fn () => app(Auditoria::class)->registrar('rol.creacion', 'rol', '7', null, ['nombre' => 'lector']));
+        DB::transaction(fn () => app(IAuditor::class)->registrar('rol.creacion', 'rol', '7', null, ['nombre' => 'lector']));
 
         $entry = DB::table('iam_auditoria')->sole();
         $this->assertSame('persona', $entry->actor_tipo);
@@ -67,14 +67,14 @@ class AuditoriaTest extends TestCase
 
         // RefreshDatabase wraps the test in a transaction: leave it to check the guard.
         DB::rollBack();
-        app(Auditoria::class)->registrar('rol.creacion', 'rol', '7');
+        app(IAuditor::class)->registrar('rol.creacion', 'rol', '7');
     }
 
     public function test_the_entry_is_rolled_back_with_its_change(): void
     {
         try {
             DB::transaction(function () {
-                app(Auditoria::class)->registrar('rol.creacion', 'rol', '7', null, ['nombre' => 'lector']);
+                app(IAuditor::class)->registrar('rol.creacion', 'rol', '7', null, ['nombre' => 'lector']);
 
                 throw new RuntimeException('falla al guardar el cambio');
             });
@@ -86,7 +86,7 @@ class AuditoriaTest extends TestCase
 
     public function test_a_refused_attempt_is_recorded(): void
     {
-        app(Auditoria::class)->rechazar('usuario.rol.asignacion', 'usuario', self::ANA, 'ESCALAMIENTO_DE_PRIVILEGIOS');
+        app(IAuditor::class)->rechazar('usuario.rol.asignacion', 'usuario', self::ANA, 'ESCALAMIENTO_DE_PRIVILEGIOS');
 
         $entry = DB::table('iam_auditoria')->sole();
         $this->assertSame('rechazado', $entry->resultado);
@@ -98,7 +98,7 @@ class AuditoriaTest extends TestCase
     {
         foreach ([['secret' => 'x'], ['datos' => ['password' => 'x']], ['Secreto' => 'x']] as $values) {
             try {
-                DB::transaction(fn () => app(Auditoria::class)->registrar('cliente.creacion', 'cliente', 'id', null, $values));
+                DB::transaction(fn () => app(IAuditor::class)->registrar('cliente.creacion', 'cliente', 'id', null, $values));
                 $this->fail('Debió rechazar el secreto.');
             } catch (LogicException) {
             }
@@ -111,7 +111,7 @@ class AuditoriaTest extends TestCase
     {
         $applicationId = DB::table('applications')->insertGetId(['name' => 'portal']);
         $roleId = DB::table('roles')->insertGetId(['application_id' => $applicationId, 'name' => 'lector']);
-        DB::transaction(fn () => app(Auditoria::class)->registrar('rol.creacion', 'rol', (string) $roleId, null, ['nombre' => 'lector']));
+        DB::transaction(fn () => app(IAuditor::class)->registrar('rol.creacion', 'rol', (string) $roleId, null, ['nombre' => 'lector']));
 
         DB::table('roles')->where('id', $roleId)->delete();
 

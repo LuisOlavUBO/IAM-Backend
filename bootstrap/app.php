@@ -1,6 +1,6 @@
 <?php
 
-use App\Domains\Acceso\ErrorDeLogin;
+use App\Domains\Acceso\Infrastructure\ErrorDeLogin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Domains\Clientes\NuevoCliente;
+use App\Domains\Clientes\Domain\NuevoCliente;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

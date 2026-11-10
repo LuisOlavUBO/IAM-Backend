@@ -1,0 +1,19 @@
+<?php
+
+namespace Tests\Feature\{{dominio}};
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+/**
+ * Escenarios de {{caso}} (spec del dominio {{dominio}}).
+ */
+class {{caso}}Test extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_pendiente(): void
+    {
+        $this->markTestIncomplete('Escribir los escenarios de {{caso}}.');
+    }
+}

@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Domains\{{dominio}}\Features\{{caso}};
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * Respuesta de {{caso}}: una lista blanca de campos, nunca el modelo completo.
+ *
+ * @property array<string, mixed> $resource
+ */
+final class {{caso}}Resource extends JsonResource
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        // TODO: los campos de la respuesta.
+        return $this->resource;
+    }
+}

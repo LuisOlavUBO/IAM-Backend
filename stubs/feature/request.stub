@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Domains\{{dominio}}\Features\{{caso}};
+
+use Illuminate\Foundation\Http\FormRequest;
+
+/**
+ * Datos de {{caso}}. El permiso lo exige la ruta (can:iam:…).
+ */
+final class {{caso}}Request extends FormRequest
+{
+    /**
+     * @return array<string, list<string>>
+     */
+    public function rules(): array
+    {
+        return [
+            // TODO: reglas de validación.
+        ];
+    }
+}

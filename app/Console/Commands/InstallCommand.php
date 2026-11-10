@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Domains\Auditoria\Auditoria;
-use App\Domains\Clientes\NuevoCliente;
-use App\Domains\Usuarios\Application\ClaveTemporal;
-use App\Rules\Rut;
+use App\Domains\Clientes\Domain\NuevoCliente;
+use App\Domains\Usuarios\Domain\ClaveTemporal;
+use App\Shared\Auditoria\IAuditor;
+use App\Shared\Rut\Rut;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -57,7 +57,7 @@ class InstallCommand extends Command
         'mesa-de-ayuda' => ['Atiende a personas: altas, claves y roles', ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:catalogo.leer']],
     ];
 
-    public function __construct(private readonly Auditoria $auditoria, private readonly NuevoCliente $nuevoCliente)
+    public function __construct(private readonly IAuditor $auditoria, private readonly NuevoCliente $nuevoCliente)
     {
         parent::__construct();
     }

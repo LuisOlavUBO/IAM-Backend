@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Domains\{{dominio}}\Features\{{caso}};
+
+use Illuminate\Http\JsonResponse;
+
+/**
+ * TODO: método y URL de {{caso}}. Solo traduce HTTP: valida, llama al caso de uso y da formato.
+ */
+final class {{caso}}Endpoint
+{
+    public function __invoke({{caso}}Request $request, {{caso}}{{tipo}}Handler $handler): JsonResponse
+    {
+        return (new {{caso}}Resource($handler($request->validated())))->response();
+    }
+}

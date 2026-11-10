@@ -170,30 +170,62 @@ El compose fuerza `APP_ENV=production`, `APP_DEBUG=false` y `LOG_CHANNEL=stderr`
 ## Estructura
 
 ```
-app/Domains/<Dominio>/routes/v1.php   rutas de cada dominio (Acceso, Catalogo, Usuarios, Clientes, Auditoria)
+app/Domains/<Dominio>/                dominios: Acceso, Catalogo, Usuarios, Clientes, Auditoria
+app/Shared/                           núcleo compartido: Paginacion, Rut, Auditoria (IAuditor)
+app/Console/Commands/                 iam:install, iam:grant-admin, iam:make-feature
 routes/web.php                        montaje de los dominios bajo /api/iam/v1 (grupo web, sesión del portal)
 routes/api.php                        /api/iam/v1/salud y docs
+stubs/feature/                        plantillas del generador de casos de uso
 database/migrations/                  esquema_base_iam y las migraciones de API-IAM
 docs/openapi/, docs/bruno/            contrato y colección
 openspec/                             specs y cambios
 ```
 
-Cada dominio sigue las capas de API-Maestros (SOLID, dependencias en una sola dirección:
-`Http` → `Application` → `Contracts` ← `Infrastructure`). Usuarios es el primero completo:
+### Arquitectura
+
+Monolito modular por dominio, con un caso de uso por carpeta, CQRS lite e interfaces solo en los bordes (spec
+`arquitectura-de-dominios`). Usuarios es el dominio de referencia:
 
 ```
 app/Domains/Usuarios/
-+-- UsuariosServiceProvider.php   enlaza los contratos con su implementación (bootstrap/providers.php)
-+-- Application/                  UsuarioService y objetos de la consulta (FiltroUsuarios, DetalleUsuario...)
-+-- Contracts/                    IUsuarioRepository
-+-- Exceptions/                   UsuarioNoEncontrado (404 USUARIO_NO_ENCONTRADO)
-+-- Http/Controllers/V1/          UsuarioController: solo traduce HTTP
-+-- Http/Requests/V1/             validación (FormRequest)
-+-- Http/Resources/V1/            respuestas con lista blanca de campos
-+-- Infrastructure/Eloquent/      EloquentUsuarioRepository
-+-- Models/                       Usuario (tabla users, credenciales en $hidden)
-+-- routes/v1.php
++-- UsuariosServiceProvider.php   enlaza cada interfaz con su implementación
++-- routes/v1.php                 una línea por caso de uso
++-- Features/                     QUÉ HACE: un caso de uso por carpeta
+|   +-- ListarUsuarios/           ListarUsuariosEndpoint, Request, QueryHandler, Resource
+|   +-- VerUsuario/               VerUsuarioEndpoint, QueryHandler, Resource
++-- Domain/                       EL NÚCLEO, sin HTTP ni SQL: ClaveTemporal, UsuarioNoEncontradoException
+|   +-- Dto/                      FiltroUsuariosDto, UsuarioResumenDto, UsuarioDetalleDto, RolAsignadoDto
+|   +-- Interfaces/               IUsuarioQueryRepository
++-- Infrastructure/               CÓMO: UsuarioQueryRepository, DirectorioUsuariosService (SQL)
++-- Contracts/                    LO PÚBLICO para otros dominios: IDirectorioUsuariosService, PersonaBasicaDto
 ```
 
-A diferencia de Maestros, el `ServiceProvider` no monta rutas (lo hace `routes/web.php`, que da la sesión) y no hay
-`Shared`: los errores de negocio extienden `DomainProblem` de `ubo/common`.
+Flujo de una consulta (`GET /usuarios/{uuid}`):
+
+```
+routes/v1.php → VerUsuarioEndpoint → VerUsuarioQueryHandler → IUsuarioQueryRepository → UsuarioDetalleDto → VerUsuarioResource
+                                                                 +-- UsuarioQueryRepository (Infrastructure)
+```
+
+- El **endpoint** traduce HTTP (toma lo validado, llama al handler y elige cómo se responde), el **request** valida,
+  el **handler** es el caso de uso (recibe datos tipados y solo las interfaces que usa) y el **resource** arma el JSON
+  con una lista blanca de campos.
+- CQRS lite: un `QueryHandler` lee por un `I<Entidad>QueryRepository` que devuelve DTO; un `CommandHandler` escribe
+  con la entidad de `Domain/`, su `I<Entidad>Repository`, la transacción y `IAuditor`. Sin bus ni eventos.
+- Nombres al estilo .NET: `I…` interfaz, `…Dto`, `…Exception`, `…QueryRepository` / `…Repository`, `…Service`.
+- Las capas `Domain`, `Infrastructure` y `Contracts` se crean solo cuando tienen algo (Catálogo hoy solo tiene
+  `routes/v1.php`); las subcarpetas por tipo, cuando una carpeta pasa de unos diez archivos.
+- Entre dominios solo se usa `Contracts/`; `Shared` no conoce dominios; un caso de uso no importa otro ni
+  `Infrastructure`. `tests/Unit/ArquitecturaTest.php` lo verifica en cada `php artisan test`.
+- Un caso de uso nuevo se crea con:
+
+  ```bash
+  php artisan iam:make-feature Catalogo ListarAplicaciones
+  ```
+
+  Crea la carpeta con sus cuatro archivos (`ListarAplicacionesQueryHandler`; con `--command`, un `CommandHandler`) y
+  su test en `tests/Feature/Catalogo/`, y muestra la línea de ruta que hay que agregar en
+  `app/Domains/Catalogo/routes/v1.php` (método, URL y permiso).
+
+El `ServiceProvider` de cada dominio solo enlaza interfaces con implementaciones: las rutas las monta
+`routes/web.php`, que da la sesión del portal. Las excepciones de negocio extienden `DomainProblem` de `ubo/common`.
