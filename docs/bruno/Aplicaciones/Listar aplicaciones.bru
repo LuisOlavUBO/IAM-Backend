@@ -1,0 +1,52 @@
+meta {
+  name: Listar aplicaciones
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones?buscar=&pagina=1&por_pagina=20
+  body: none
+  auth: none
+}
+
+params:query {
+  buscar:
+  pagina: 1
+  por_pagina: 20
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+tests {
+  test("lista aplicaciones paginadas", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.be.an("array");
+    expect(res.body.meta).to.have.all.keys("total", "pagina", "por_pagina");
+  });
+}
+
+docs {
+  # Listar aplicaciones
+
+  `GET /api/iam/v1/aplicaciones` · sesión del portal · `iam:aplicaciones.leer`
+
+  `buscar` filtra por nombre o descripción (sin distinguir mayúsculas).
+
+  ## Respuesta 200
+
+  ```json
+  {
+    "data": [
+      { "nombre": "iam-admin", "descripcion": "Portal de administración de IAM", "permisos": 7, "roles": 2 }
+    ],
+    "meta": { "total": 1, "pagina": 1, "por_pagina": 20 }
+  }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`, 403 `ACCESO_DENEGADO`, 422 `VALIDACION`.
+}

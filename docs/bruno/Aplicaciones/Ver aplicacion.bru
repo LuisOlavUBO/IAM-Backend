@@ -1,0 +1,56 @@
+meta {
+  name: Ver aplicacion
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+vars:pre-request {
+  aplicacionNombre: iam-admin
+}
+
+tests {
+  test("trae la aplicación con sus permisos y roles", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.permisos).to.be.an("array");
+    expect(res.body.data.roles).to.be.an("array");
+  });
+}
+
+docs {
+  # Ver aplicación
+
+  `GET /api/iam/v1/aplicaciones/{nombre}` · sesión del portal · `iam:aplicaciones.leer`
+
+  ## Respuesta 200
+
+  ```json
+  {
+    "data": {
+      "nombre": "iam-admin",
+      "descripcion": "Portal de administración de IAM",
+      "creada": "2026-11-09T10:00:00+00:00",
+      "actualizada": "2026-11-09T10:00:00+00:00",
+      "permisos": [
+        { "nombre": "iam:aplicaciones.leer", "descripcion": "Ver aplicaciones, roles y permisos" }
+      ],
+      "roles": [
+        { "nombre": "mesa-de-ayuda", "descripcion": "Atiende a personas: altas, claves y roles", "permisos": ["iam:aplicaciones.leer", "iam:usuarios.administrar", "iam:usuarios.leer"] }
+      ]
+    }
+  }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`, 403 `ACCESO_DENEGADO`, 404 `APLICACION_NO_ENCONTRADA`.
+}

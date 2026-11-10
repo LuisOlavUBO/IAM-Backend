@@ -44,6 +44,8 @@ tags:
     description: Inicio y cierre de sesión del portal por el SSO de IAM, y la persona con sesión.
   - name: Usuarios
     description: Personas de IAM. Consulta con el permiso `iam:usuarios.leer`.
+  - name: Aplicaciones
+    description: Sistemas registrados en IAM, con sus permisos y roles. Consulta con el permiso `iam:aplicaciones.leer`.
   - name: Salud
     description: Estado del servicio.
 
@@ -247,6 +249,86 @@ paths:
                 detail: No existe una persona con ese identificador.
                 error: USUARIO_NO_ENCONTRADO
 
+  /api/iam/v1/aplicaciones:
+    get:
+      tags: [Aplicaciones]
+      summary: Listar aplicaciones
+      description: |
+        Aplicaciones de IAM ordenadas por nombre, paginadas, con la cantidad de permisos y roles de cada una.
+        `buscar` filtra por nombre o descripción que contengan el texto (sin distinguir mayúsculas).
+        Nunca incluye ids internos.
+      operationId: listarAplicaciones
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: buscar
+          in: query
+          required: false
+          description: Parte del nombre o de la descripción.
+          schema: { type: string, maxLength: 100 }
+        - name: pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: por_pagina
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Una página de aplicaciones.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AplicacionResumen' }
+                  meta: { $ref: '#/components/schemas/MetaPaginacion' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/aplicaciones/{nombre}:
+    get:
+      tags: [Aplicaciones]
+      summary: Ver una aplicación
+      description: La aplicación con sus permisos y sus roles, y los permisos que da cada rol (todo ordenado por nombre).
+      operationId: verAplicacion
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: nombre
+          in: path
+          required: true
+          description: Nombre de la aplicación (sin distinguir mayúsculas).
+          schema: { type: string, example: iam-admin }
+      responses:
+        '200':
+          description: La aplicación.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AplicacionDetalle' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe una aplicación con ese nombre (`APLICACION_NO_ENCONTRADA`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Aplicación no encontrada
+                status: 404
+                detail: No existe una aplicación con ese nombre.
+                error: APLICACION_NO_ENCONTRADA
+
   /api/iam/v1/salud:
     get:
       tags: [Salud]
@@ -396,6 +478,56 @@ components:
                       properties:
                         nombre: { type: string, example: administrador }
                         descripcion: { type: [string, 'null'] }
+
+    AplicacionResumen:
+      type: object
+      required: [nombre, descripcion, permisos, roles]
+      properties:
+        nombre:
+          type: string
+          description: Nombre único de la aplicación; la identifica en la URL.
+          example: iam-admin
+        descripcion: { type: [string, 'null'], example: Portal de administración de IAM }
+        permisos:
+          type: integer
+          description: Cantidad de permisos que define.
+          example: 7
+        roles:
+          type: integer
+          description: Cantidad de roles que define.
+          example: 2
+
+    AplicacionDetalle:
+      type: object
+      required: [nombre, descripcion, creada, actualizada, permisos, roles]
+      properties:
+        nombre: { type: string, example: iam-admin }
+        descripcion: { type: [string, 'null'] }
+        creada: { type: [string, 'null'], format: date-time }
+        actualizada: { type: [string, 'null'], format: date-time }
+        permisos:
+          type: array
+          description: Permisos de la aplicación, ordenados por nombre.
+          items:
+            type: object
+            required: [nombre, descripcion]
+            properties:
+              nombre: { type: string, example: 'iam:usuarios.leer' }
+              descripcion: { type: string, example: Ver usuarios y sus roles }
+        roles:
+          type: array
+          description: Roles de la aplicación, ordenados por nombre.
+          items:
+            type: object
+            required: [nombre, descripcion, permisos]
+            properties:
+              nombre: { type: string, example: mesa-de-ayuda }
+              descripcion: { type: [string, 'null'] }
+              permisos:
+                type: array
+                description: Nombres de los permisos que da el rol, ordenados.
+                items: { type: string }
+                example: ['iam:aplicaciones.leer', 'iam:usuarios.administrar', 'iam:usuarios.leer']
 
   responses:
     NoAutenticado:
