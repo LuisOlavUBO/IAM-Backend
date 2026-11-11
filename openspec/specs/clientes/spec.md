@@ -1,7 +1,7 @@
 # clientes Specification
 
 ## Purpose
-Define cómo el portal consulta los clientes OAuth registrados en IAM (el listado con búsqueda y el detalle de cada cliente con su aplicación, sus concesiones, sus redirecciones y sus roles, sin exponer el secreto ni identificadores internos y sin escribir en la base), cómo rota el secreto de un cliente confidencial (el secreto nuevo se muestra una sola vez y la rotación queda en la auditoría sin su valor) y cómo revoca y reactiva un cliente, auditado, salvo revocar los clientes de `iam-admin` que usa la propia API-IAM.
+Define cómo el portal consulta los clientes OAuth registrados en IAM (el listado con búsqueda y el detalle de cada cliente con su aplicación, sus concesiones, sus redirecciones y sus roles, sin exponer el secreto ni identificadores internos y sin escribir en la base), cómo crea un cliente confidencial `authorization-code` o `client-credentials` de una aplicación distinta de `iam-admin` (con nombre único y redirecciones seguras; el secreto se muestra una sola vez y la creación queda en la auditoría sin su valor), cómo rota el secreto de un cliente confidencial (el secreto nuevo se muestra una sola vez y la rotación queda en la auditoría sin su valor) y cómo revoca y reactiva un cliente, auditado, salvo revocar los clientes de `iam-admin` que usa la propia API-IAM.
 
 ## Requirements
 
