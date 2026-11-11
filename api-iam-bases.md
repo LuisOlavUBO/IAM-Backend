@@ -175,7 +175,7 @@ Solo dos. Todo lo demás se hace en el portal.
 - Muestran el ambiente y la base de datos y piden confirmación.
 - La contraseña temporal del primer administrador vence (72 horas) y se debe cambiar en el primer acceso.
 - `iam:grant-admin` solo da el rol de administrador de IAM, pide confirmación y **queda registrado en la auditoría**.
-- No se cargan datos a mano por SQL. La única excepción es un procedimiento de emergencia documentado en el README.
+- No se cargan datos a mano por SQL. Un secreto perdido se recupera con `iam:rotate-secret` (procedimiento de emergencia del README).
 
 ## 8. Orden de trabajo y dependencias
 

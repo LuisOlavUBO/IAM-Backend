@@ -5,7 +5,7 @@
 - Las migraciones se registran en `iam_migrations`. En las tablas que lee API-Auth los cambios solo agregan columnas o tablas: renombrar o borrar exige antes una versión de API-Auth que ya no las use.
 - Las tablas propias llevan el prefijo `iam_`.
 - No referirse a claves primarias por nombre en migraciones: sus nombres difieren entre ambientes.
-- No se cargan datos a mano por SQL, salvo el procedimiento de emergencia del README.
+- No se cargan datos a mano por SQL. Un secreto perdido se recupera con `iam:rotate-secret` (README, "Procedimiento de emergencia").
 - `migrate:fresh`, `migrate:refresh`, `migrate:reset` y `db:wipe` están prohibidos fuera de `testing`: borrarían también las tablas de API-Auth.
 
 ## Contraseñas y secretos
