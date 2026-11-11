@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define cómo el portal consulta y administra a las personas de IAM: el listado con búsqueda, el detalle de cada persona con sus roles por aplicación, el alta de personas con acceso Microsoft o clave temporal, y la asignación y el retiro de roles con sus protecciones, sin exponer nunca credenciales ni identificadores internos.
+Define cómo el portal consulta y administra a las personas de IAM: el listado con búsqueda, el detalle de cada persona con sus roles por aplicación, el alta de personas con acceso Microsoft o clave temporal, su baja, reactivación y reinicio de clave, y la asignación y el retiro de roles, todo con sus protecciones, sin exponer nunca credenciales ni identificadores internos.
 
 ## Requirements
 
