@@ -1,0 +1,51 @@
+meta {
+  name: Crear cliente
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/clientes
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "nombre": "satelite-web",
+    "aplicacion": "satelite",
+    "tipo": "authorization-code",
+    "redirecciones": ["https://satelite.ubo.cl/auth/callback"]
+  }
+}
+
+tests {
+  test("crea el cliente y entrega el secreto una sola vez", function () {
+    expect(res.status).to.equal(201);
+    expect(res.headers["cache-control"]).to.contain("no-store");
+    expect(res.body.data.id).to.be.a("string");
+    expect(res.body.data.secreto).to.match(/^[A-Za-z0-9]{40}$/);
+  });
+}
+
+docs {
+  # Crear cliente
+
+  `POST /api/iam/v1/clientes` · sesión del portal · `iam:clientes.administrar` · CSRF
+
+  Cuerpo `{ nombre, aplicacion, tipo, redirecciones? }`, con `tipo` `authorization-code` (login de personas: concesiones `authorization_code` y `refresh_token`, al menos una redirección) o `client-credentials` (servicio a servicio: `client_credentials`, sin redirecciones). Las redirecciones son URL absolutas `https` (o `http` en `localhost`), sin fragmento. El cliente queda confidencial y sin roles.
+
+  201 `{ "data": { "id": "…", "secreto": "7fQx2Lm9Rk4Tz8Wb1Nc6Vd3Hj5Ps0Ya2Ge7Ku9Mi" } }` con `Cache-Control: no-store`. El secreto se muestra **una sola vez** y no queda en la auditoría (`cliente.creacion` con `{nombre, aplicacion, tipo, redirecciones}`).
+
+  Crea un cliente real que no se puede borrar (solo revocar): úselo solo contra una base de pruebas. Los clientes de `iam-admin` solo los crea `iam:install`.
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 409 `CLIENTE_EXISTENTE` (nombre repetido, sin distinguir mayúsculas); 419 sin CSRF; 422 `VALIDACION` (mensajes en `errores.nombre`, `errores.aplicacion` —inexistente o `iam-admin`—, `errores.tipo`, `errores.redirecciones` o `errores.redirecciones.N`).
+}

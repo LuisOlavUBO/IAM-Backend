@@ -34,6 +34,13 @@ final class DirectorioAplicacionesService implements IDirectorioAplicacionesServ
         return $ids === [] ? [] : self::mapa(DB::table('oauth_scopes')->whereIn('id', self::unicos($ids))->get(['id', 'name']));
     }
 
+    public function idDeAplicacion(string $nombre): ?int
+    {
+        $id = DB::table('applications')->where('name', $nombre)->value('id');
+
+        return $id === null ? null : (int) $id;
+    }
+
     /**
      * @param  list<int>  $ids
      * @return list<int>

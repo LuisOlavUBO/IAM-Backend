@@ -3,6 +3,7 @@
 namespace App\Domains\Clientes\Infrastructure;
 
 use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
+use App\Domains\Clientes\Domain\Dto\NuevoClienteDto;
 use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,28 @@ final class ClientesRepository implements IClientesRepository
             ->get($this->columnas())
             ->map(fn (object $fila) => self::dto($fila))
             ->all();
+    }
+
+    public function nombreEnUso(string $nombre): bool
+    {
+        // The CI collation of the IAM database ignores case (design D5 of clientes-crear).
+        return DB::table('oauth_clients')->where('name', $nombre)->exists();
+    }
+
+    public function crear(NuevoClienteDto $cliente, int $aplicacionId): void
+    {
+        DB::table('oauth_clients')->insert([
+            'id' => $cliente->id,
+            'application_id' => $aplicacionId,
+            'name' => $cliente->nombre,
+            'secret' => $cliente->hashSecreto,
+            'provider' => $cliente->provider,
+            'redirect_uris' => json_encode($cliente->redirecciones),
+            'grant_types' => json_encode($cliente->concesiones),
+            'revoked' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     public function cambiarSecreto(string $id, string $hash): void

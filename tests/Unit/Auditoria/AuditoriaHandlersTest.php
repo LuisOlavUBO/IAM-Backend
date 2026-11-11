@@ -156,6 +156,11 @@ final class DirectorioAplicacionesFalso implements IDirectorioAplicacionesServic
         return $this->responder('permisos', $ids, [3 => 'iam:usuarios.leer']);
     }
 
+    public function idDeAplicacion(string $nombre): ?int
+    {
+        return $nombre === 'iam-admin' ? 7 : null;
+    }
+
     /**
      * @param  list<int>  $ids
      * @param  array<int, string>  $nombres

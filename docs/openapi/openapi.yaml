@@ -694,6 +694,69 @@ paths:
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '403': { $ref: '#/components/responses/AccesoDenegado' }
         '422': { $ref: '#/components/responses/Validacion' }
+    post:
+      tags: [Clientes]
+      summary: Crear un cliente OAuth
+      description: |
+        Crea un cliente confidencial de una aplicación, sin roles. `authorization-code` (login de personas) recibe las
+        concesiones `authorization_code` y `refresh_token` y necesita al menos una redirección; `client-credentials`
+        (servicio a servicio) recibe `client_credentials` y no lleva redirecciones. Cada redirección debe ser una URL
+        absoluta `https` (o `http` en `localhost`), sin fragmento. El nombre no puede repetirse entre los clientes, sin
+        distinguir mayúsculas. Los clientes de `iam-admin` solo los crea `iam:install`.
+
+        El secreto va **solo en esta respuesta** (`Cache-Control: no-store`); se guarda solo su hash y nunca queda en
+        logs ni en la auditoría, donde la creación queda como `cliente.creacion` con
+        `{nombre, aplicacion, tipo, redirecciones}`. Exige `iam:clientes.administrar`.
+      operationId: crearCliente
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, aplicacion, tipo]
+              properties:
+                nombre: { type: string, maxLength: 100, example: satelite-web }
+                aplicacion:
+                  type: string
+                  description: Nombre de una aplicación existente, distinta de `iam-admin`.
+                  example: satelite
+                tipo:
+                  type: string
+                  enum: [authorization-code, client-credentials]
+                redirecciones:
+                  type: [array, 'null']
+                  description: Obligatorias con `authorization-code`; prohibidas con `client-credentials`.
+                  items: { type: string, format: uri, example: 'https://satelite.ubo.cl/auth/callback' }
+      responses:
+        '201':
+          description: Cliente creado. El secreto no se vuelve a mostrar.
+          headers:
+            Cache-Control:
+              description: '`no-store`: ni el navegador ni un proxy guardan la respuesta.'
+              schema: { type: string, example: 'no-store, private' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClienteCreado' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '409':
+          description: Otro cliente ya usa ese nombre, sin distinguir mayúsculas (`CLIENTE_EXISTENTE`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Cliente existente
+                status: 409
+                detail: Ya existe un cliente con ese nombre.
+                error: CLIENTE_EXISTENTE
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
 
   /api/iam/v1/clientes/{id}:
     get:
@@ -1270,6 +1333,21 @@ components:
             sesiones_revocadas:
               type: boolean
               description: API-Auth confirmó el cierre de las sesiones; con `false` se reintenta con `POST /usuarios/{uuid}/sesiones/revocar`.
+
+    ClienteCreado:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id, secreto]
+          properties:
+            id: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b }
+            secreto:
+              type: string
+              pattern: '^[A-Za-z0-9]{40}$'
+              description: Se muestra una sola vez.
+              example: 7fQx2Lm9Rk4Tz8Wb1Nc6Vd3Hj5Ps0Ya2Ge7Ku9Mi
 
     SecretoRotado:
       type: object

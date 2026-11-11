@@ -32,6 +32,16 @@ class DirectorioAplicacionesServiceTest extends TestCase
         $this->assertSame([$permiso => 'iam:usuarios.leer'], $directorio->permisos([$permiso]));
     }
 
+    public function test_the_id_of_an_application_by_its_name_without_distinguishing_case(): void
+    {
+        $fuas = DB::table('applications')->insertGetId(['name' => 'fuas']);
+        $directorio = app(IDirectorioAplicacionesService::class);
+
+        $this->assertSame($fuas, $directorio->idDeAplicacion('fuas'));
+        $this->assertSame($fuas, $directorio->idDeAplicacion('FUAS'));
+        $this->assertNull($directorio->idDeAplicacion('no-existe'));
+    }
+
     public function test_empty_lists_do_not_query(): void
     {
         $directorio = app(IDirectorioAplicacionesService::class);

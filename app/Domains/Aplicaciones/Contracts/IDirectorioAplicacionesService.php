@@ -26,4 +26,7 @@ interface IDirectorioAplicacionesService
      * @return array<int, string> id => permission name
      */
     public function permisos(array $ids): array;
+
+    /** The id of the application with that name, without distinguishing case, or null. */
+    public function idDeAplicacion(string $nombre): ?int;
 }

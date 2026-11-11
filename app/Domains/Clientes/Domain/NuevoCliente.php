@@ -2,15 +2,14 @@
 
 namespace App\Domains\Clientes\Domain;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use App\Domains\Clientes\Domain\Dto\NuevoClienteDto;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /**
- * Creates an OAuth client in oauth_clients with the same attributes API-Auth's
- * Application::createClient sets (Passport's table, without installing Passport). The secret is
- * random, stored as a bcrypt hash, and only returned here, once.
+ * Builds a confidential OAuth client with the same attributes API-Auth's Application::createClient sets
+ * (Passport's table, without installing Passport), without saving it: IClientesRepository::crear does
+ * (design D2 of clientes-crear). The secret is random and only its bcrypt hash is stored.
  */
 final class NuevoCliente
 {
@@ -18,13 +17,14 @@ final class NuevoCliente
 
     public const CLIENT_CREDENTIALS = 'client-credentials';
 
+    public const TIPOS = [self::AUTHORIZATION_CODE, self::CLIENT_CREDENTIALS];
+
     /**
-     * @param  list<string>  $redirecciones  Required (at least one) for authorization-code clients
-     * @return array{id: string, secreto: string}
+     * @param  list<string>  $redirecciones  Required (at least one) for authorization-code clients; ignored for client-credentials
      */
-    public function crear(int $applicationId, string $nombre, string $tipo, array $redirecciones = []): array
+    public static function armar(string $nombre, string $tipo, array $redirecciones = []): NuevoClienteDto
     {
-        $grantTypes = match ($tipo) {
+        $concesiones = match ($tipo) {
             self::AUTHORIZATION_CODE => ['authorization_code', 'refresh_token'],
             self::CLIENT_CREDENTIALS => ['client_credentials'],
             default => throw new InvalidArgumentException("Tipo de cliente no soportado: {$tipo}."),
@@ -34,23 +34,18 @@ final class NuevoCliente
             throw new InvalidArgumentException('Un cliente authorization-code necesita al menos una redirección.');
         }
 
-        // Passport's Client uses HasUuids: a UUID v7.
-        $id = Str::lower((string) Str::uuid7());
-        $secreto = Str::random(40);
+        $secreto = SecretoDeCliente::generar();
 
-        DB::table('oauth_clients')->insert([
-            'id' => $id,
-            'application_id' => $applicationId,
-            'name' => $nombre,
-            'secret' => Hash::make($secreto),
-            'provider' => $tipo === self::CLIENT_CREDENTIALS ? null : 'users',
-            'redirect_uris' => json_encode($tipo === self::AUTHORIZATION_CODE ? array_values($redirecciones) : []),
-            'grant_types' => json_encode($grantTypes),
-            'revoked' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return ['id' => $id, 'secreto' => $secreto];
+        return new NuevoClienteDto(
+            // Passport's Client uses HasUuids: a UUID v7.
+            id: Str::lower((string) Str::uuid7()),
+            nombre: $nombre,
+            tipo: $tipo,
+            redirecciones: $tipo === self::AUTHORIZATION_CODE ? array_values($redirecciones) : [],
+            concesiones: $concesiones,
+            provider: $tipo === self::CLIENT_CREDENTIALS ? null : 'users',
+            hashSecreto: $secreto->hash(),
+            secreto: $secreto->secreto,
+        );
     }
 }

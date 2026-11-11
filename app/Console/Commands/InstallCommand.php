@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
 use App\Domains\Clientes\Domain\NuevoCliente;
+use App\Domains\Clientes\Domain\Redireccion;
 use App\Domains\Usuarios\Domain\ClaveTemporal;
 use App\Shared\Auditoria\IAuditor;
 use App\Shared\Rut\Rut;
@@ -57,7 +59,7 @@ class InstallCommand extends Command
         'mesa-de-ayuda' => ['Atiende a personas: altas, claves y roles', ['iam:usuarios.leer', 'iam:usuarios.administrar', 'iam:aplicaciones.leer']],
     ];
 
-    public function __construct(private readonly IAuditor $auditoria, private readonly NuevoCliente $nuevoCliente)
+    public function __construct(private readonly IAuditor $auditoria, private readonly IClientesRepository $clientes)
     {
         parent::__construct();
     }
@@ -144,26 +146,12 @@ class InstallCommand extends Command
         }
 
         foreach ($redirects as $redirect) {
-            if (! self::isValidRedirect($redirect)) {
+            if (! Redireccion::esValida($redirect)) {
                 $errors[] = "La redirección {$redirect} debe ser una URL absoluta https (o http en localhost), sin fragmento.";
             }
         }
 
         return $errors;
-    }
-
-    public static function isValidRedirect(string $url): bool
-    {
-        $parts = parse_url($url);
-
-        if (! is_array($parts) || ! isset($parts['scheme'], $parts['host']) || isset($parts['fragment'])) {
-            return false;
-        }
-
-        $host = Str::lower($parts['host']);
-        $local = $host === 'localhost' || str_ends_with($host, '.localhost');
-
-        return Str::lower($parts['scheme']) === 'https' || (Str::lower($parts['scheme']) === 'http' && $local);
     }
 
     /**
@@ -178,12 +166,12 @@ class InstallCommand extends Command
         $iamAdmin = $this->ensureApplication('iam-admin', 'Portal de administración de IAM');
         $this->ensureCatalog($iamAdmin, self::IAM_SCOPES, self::IAM_ROLES);
 
-        $portal = $this->nuevoCliente->crear($iamAdmin, 'iam-admin-portal', NuevoCliente::AUTHORIZATION_CODE, $redirects);
+        $portal = $this->crearCliente($iamAdmin, 'iam-admin-portal', NuevoCliente::AUTHORIZATION_CODE, $redirects);
         $this->auditoria->registrar('cliente.creacion', 'cliente', $portal['id'], null, [
             'nombre' => 'iam-admin-portal', 'aplicacion' => 'iam-admin', 'tipo' => NuevoCliente::AUTHORIZATION_CODE, 'redirecciones' => $redirects,
         ]);
 
-        $sistema = $this->nuevoCliente->crear($iamAdmin, 'iam-admin-sistema', NuevoCliente::CLIENT_CREDENTIALS);
+        $sistema = $this->crearCliente($iamAdmin, 'iam-admin-sistema', NuevoCliente::CLIENT_CREDENTIALS);
         $this->auditoria->registrar('cliente.creacion', 'cliente', $sistema['id'], null, [
             'nombre' => 'iam-admin-sistema', 'aplicacion' => 'iam-admin', 'tipo' => NuevoCliente::CLIENT_CREDENTIALS,
         ]);
@@ -201,6 +189,20 @@ class InstallCommand extends Command
         $this->auditoria->registrar('usuario.rol.asignacion', 'usuario', $uuid, null, ['rol' => 'iam-admin/administrador']);
 
         return ['portal' => $portal, 'sistema' => $sistema, 'clave' => $clave];
+    }
+
+    /**
+     * Builds the client and saves it through the repository's interface (design D2 of clientes-crear).
+     *
+     * @param  list<string>  $redirects
+     * @return array{id: string, secreto: string}
+     */
+    private function crearCliente(int $applicationId, string $nombre, string $tipo, array $redirects = []): array
+    {
+        $cliente = NuevoCliente::armar($nombre, $tipo, $redirects);
+        $this->clientes->crear($cliente, $applicationId);
+
+        return ['id' => $cliente->id, 'secreto' => $cliente->secreto];
     }
 
     /**
