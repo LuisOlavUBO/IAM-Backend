@@ -10,9 +10,9 @@ use UBO\Common\Problems\Exceptions\DomainProblem;
  */
 final class EscalamientoDePrivilegiosException extends DomainProblem
 {
-    public function __construct()
+    public function __construct(?string $detalle = null)
     {
-        parent::__construct('Para asignar o quitar roles de iam-admin necesita todos los permisos de iam-admin.');
+        parent::__construct($detalle ?? 'Para asignar o quitar roles de iam-admin necesita todos los permisos de iam-admin.');
     }
 
     public function code(): string

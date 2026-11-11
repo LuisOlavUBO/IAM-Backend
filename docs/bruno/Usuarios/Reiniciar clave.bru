@@ -1,0 +1,46 @@
+meta {
+  name: Reiniciar clave
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/usuarios/{{usuarioUuid}}/clave
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  usuarioUuid: 0190f2a4-3c1e-7d2b-9a6f-1b2c3d4e5f60
+}
+
+tests {
+  test("entrega una clave temporal una sola vez", function () {
+    expect(res.status).to.equal(200);
+    expect(res.headers["cache-control"]).to.contain("no-store");
+    expect(res.body.data.clave_temporal.clave).to.match(/^[A-Za-z2-9]{4}-[A-Za-z2-9]{4}-[A-Za-z2-9]{4}$/);
+    expect(res.body.data.sesiones_revocadas).to.be.a("boolean");
+  });
+}
+
+docs {
+  # Reiniciar clave
+
+  `POST /api/iam/v1/usuarios/{uuid}/clave` · sesión del portal · `iam:usuarios.administrar` · CSRF
+
+  Genera una clave temporal nueva (vence a las `IAM_CLAVE_TEMPORAL_HORAS` horas; API-Auth obliga a cambiarla), la registra en la auditoría sin valores (`usuario.clave.reinicio`) y después pide a API-Auth cerrar las sesiones de la persona. La clave se muestra **una sola vez** (`Cache-Control: no-store`).
+
+  ```json
+  { "data": { "clave_temporal": { "clave": "Xk7m-P2qr-9Wzt", "vence": "2026-11-13T12:00:00-03:00" }, "sesiones_revocadas": true } }
+  ```
+
+  ## Errores
+
+  401; 403 `ACCESO_DENEGADO`, `ESCALAMIENTO_DE_PRIVILEGIOS` o `ACCION_SOBRE_SI_MISMO`; 404 `USUARIO_NO_ENCONTRADO`; 419 sin CSRF.
+}

@@ -9,9 +9,9 @@ use UBO\Common\Problems\Exceptions\DomainProblem;
  */
 final class UltimoAdministradorException extends DomainProblem
 {
-    public function __construct()
+    public function __construct(?string $detalle = null)
     {
-        parent::__construct('Es la última persona activa con iam-admin/administrador: asigne el rol a otra persona antes de quitárselo.');
+        parent::__construct($detalle ?? 'Es la última persona activa con iam-admin/administrador: asigne el rol a otra persona antes de quitárselo.');
     }
 
     public function code(): string

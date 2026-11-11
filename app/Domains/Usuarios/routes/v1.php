@@ -2,8 +2,11 @@
 
 use App\Domains\Usuarios\Features\AsignarRol\AsignarRolEndpoint;
 use App\Domains\Usuarios\Features\CrearUsuario\CrearUsuarioEndpoint;
+use App\Domains\Usuarios\Features\DarDeBaja\DarDeBajaEndpoint;
 use App\Domains\Usuarios\Features\ListarUsuarios\ListarUsuariosEndpoint;
 use App\Domains\Usuarios\Features\QuitarRol\QuitarRolEndpoint;
+use App\Domains\Usuarios\Features\Reactivar\ReactivarEndpoint;
+use App\Domains\Usuarios\Features\ReiniciarClave\ReiniciarClaveEndpoint;
 use App\Domains\Usuarios\Features\RevocarSesiones\RevocarSesionesEndpoint;
 use App\Domains\Usuarios\Features\VerUsuario\VerUsuarioEndpoint;
 use Illuminate\Support\Facades\Route;
@@ -21,4 +24,7 @@ Route::middleware('can:iam:usuarios.administrar')->group(function () {
     Route::post('usuarios/{uuid}/roles', AsignarRolEndpoint::class)->name('usuarios.roles.asignar');
     Route::delete('usuarios/{uuid}/roles/{aplicacion}/{rol}', QuitarRolEndpoint::class)->name('usuarios.roles.quitar');
     Route::post('usuarios/{uuid}/sesiones/revocar', RevocarSesionesEndpoint::class)->name('usuarios.sesiones.revocar');
+    Route::post('usuarios/{uuid}/baja', DarDeBajaEndpoint::class)->name('usuarios.baja');
+    Route::post('usuarios/{uuid}/reactivacion', ReactivarEndpoint::class)->name('usuarios.reactivacion');
+    Route::post('usuarios/{uuid}/clave', ReiniciarClaveEndpoint::class)->name('usuarios.clave');
 });

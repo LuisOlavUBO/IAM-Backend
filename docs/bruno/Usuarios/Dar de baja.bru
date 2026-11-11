@@ -1,0 +1,46 @@
+meta {
+  name: Dar de baja
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/usuarios/{{usuarioUuid}}/baja
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  usuarioUuid: 0190f2a4-3c1e-7d2b-9a6f-1b2c3d4e5f60
+}
+
+tests {
+  test("da de baja e informa la revocación", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.have.property("sesiones_revocadas");
+  });
+}
+
+docs {
+  # Dar de baja
+
+  `POST /api/iam/v1/usuarios/{uuid}/baja` · sesión del portal · `iam:usuarios.administrar` · CSRF
+
+  Pone `disabled_at` (conserva sus roles; auditoría `usuario.baja`) y después pide a API-Auth cerrar las sesiones de la persona.
+
+  ```json
+  { "data": { "sesiones_revocadas": true } }
+  ```
+
+  Con `false`, la baja quedó guardada pero API-Auth no confirmó: reintentar con "Revocar sesiones". Con `null`, la persona ya estaba de baja y no cambió nada.
+
+  ## Errores
+
+  401; 403 `ACCESO_DENEGADO`, `ESCALAMIENTO_DE_PRIVILEGIOS` o `ACCION_SOBRE_SI_MISMO`; 404 `USUARIO_NO_ENCONTRADO`; 409 `ULTIMO_ADMINISTRADOR`; 419 sin CSRF.
+}

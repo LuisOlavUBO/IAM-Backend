@@ -4,7 +4,9 @@ namespace App\Domains\Usuarios\Domain\Interfaces;
 
 use App\Domains\Usuarios\Domain\ClaveTemporal;
 use App\Domains\Usuarios\Domain\CorreoEnUsoException;
+use App\Domains\Usuarios\Domain\Dto\EstadoPersonaDto;
 use App\Domains\Usuarios\Domain\Dto\NuevaPersonaDto;
+use App\Domains\Usuarios\Domain\Dto\RolDeAplicacionDto;
 use App\Domains\Usuarios\Domain\RutEnUsoException;
 
 /**
@@ -24,4 +26,23 @@ interface IPersonasRepository
      * @throws CorreoEnUsoException|RutEnUsoException When a unique index rejects the insert (design D4)
      */
     public function crear(string $uuid, NuevaPersonaDto $persona, ?ClaveTemporal $clave): void;
+
+    /** The internal id of the person with that uuid and whether they are active, or null. */
+    public function estado(string $uuid): ?EstadoPersonaDto;
+
+    /**
+     * The person's roles of iam-admin.
+     *
+     * @return list<RolDeAplicacionDto>
+     */
+    public function rolesDeIamAdmin(int $personaId): array;
+
+    /** Sets disabled_at if the person was active; false when another request already did it. */
+    public function darDeBaja(int $personaId): bool;
+
+    /** Clears disabled_at if the person was disabled; false when another request already did it. */
+    public function reactivar(int $personaId): bool;
+
+    /** Replaces the password with the hash and expiry of the temporary one. */
+    public function cambiarClave(int $personaId, ClaveTemporal $clave): void;
 }

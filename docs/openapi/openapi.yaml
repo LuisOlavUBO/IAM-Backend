@@ -29,9 +29,9 @@ info:
     | `APLICACION_NO_ENCONTRADA` | 404 | No existe una aplicación con ese nombre |
     | `CLIENTE_NO_ENCONTRADO` | 404 | No existe un cliente OAuth con ese id |
     | `ROL_NO_ASIGNADO` | 404 | La persona no tiene ese rol |
-    | `ESCALAMIENTO_DE_PRIVILEGIOS` | 403 | Asignar o quitar un rol de `iam-admin` sin todos los permisos de `iam-admin` |
-    | `ACCION_SOBRE_SI_MISMO` | 403 | Cambiar los propios roles o cerrar las propias sesiones |
-    | `ULTIMO_ADMINISTRADOR` | 409 | Quitar `iam-admin/administrador` a la última persona activa que lo tiene |
+    | `ESCALAMIENTO_DE_PRIVILEGIOS` | 403 | Asignar o quitar un rol de `iam-admin`, o dar de baja, reactivar o reiniciar la clave de una persona con roles de `iam-admin`, sin todos los permisos de `iam-admin` |
+    | `ACCION_SOBRE_SI_MISMO` | 403 | Cambiar los propios roles, cerrar las propias sesiones, darse de baja o reiniciar la propia clave |
+    | `ULTIMO_ADMINISTRADOR` | 409 | Quitar `iam-admin/administrador` a la última persona activa que lo tiene, o darla de baja |
     | `REVOCACION_FALLIDA` | 502 | API-Auth no confirmó el cierre de las sesiones; se puede reintentar |
     | `RUTA_NO_ENCONTRADA` / `METODO_NO_PERMITIDO` | 404 / 405 | La ruta o el método no existen |
     | `ERROR_INTERNO` | 500 | Error inesperado; el detalle queda solo en el log |
@@ -463,6 +463,115 @@ paths:
                 status: 502
                 detail: IAM no confirmó el cierre de las sesiones. Intente de nuevo en unos minutos.
                 error: REVOCACION_FALLIDA
+
+  /api/iam/v1/usuarios/{uuid}/baja:
+    post:
+      tags: [Usuarios]
+      summary: Dar de baja a una persona
+      description: |
+        Pone `disabled_at` (la persona conserva sus roles), lo registra en la auditoría (`usuario.baja`,
+        `{"activo": true}` → `{"activo": false}`) y después pide a API-Auth cerrar sus sesiones; API-Auth ya no le
+        emite tokens. Si API-Auth falla, la baja queda guardada y `sesiones_revocadas` es `false`: se reintenta con
+        `POST /usuarios/{uuid}/sesiones/revocar`. Si ya estaba de baja, responde 200 con `sesiones_revocadas` `null`
+        sin cambiar ni auditar nada.
+      operationId: darDeBaja
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/UuidPersona'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: Persona de baja.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [sesiones_revocadas]
+                    properties:
+                      sesiones_revocadas:
+                        type: [boolean, 'null']
+                        description: API-Auth confirmó el cierre de las sesiones; `null` si la persona ya estaba de baja.
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/RechazoSobrePersona' }
+        '404': { $ref: '#/components/responses/UsuarioNoEncontrado' }
+        '409':
+          description: Es la última persona activa con `iam-admin/administrador` (`ULTIMO_ADMINISTRADOR`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Último administrador
+                status: 409
+                detail: 'Es la última persona activa con iam-admin/administrador: asigne el rol a otra persona antes de darla de baja.'
+                error: ULTIMO_ADMINISTRADOR
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/usuarios/{uuid}/reactivacion:
+    post:
+      tags: [Usuarios]
+      summary: Reactivar a una persona
+      description: |
+        Quita `disabled_at` (la persona conserva sus roles) y lo registra en la auditoría como `usuario.alta`
+        (`{"activo": false}` → `{"activo": true}`). Si ya estaba activa, responde 200 sin cambiar ni auditar nada.
+      operationId: reactivar
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/UuidPersona'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: Persona activa.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [activo]
+                    properties:
+                      activo: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/RechazoSobrePersona' }
+        '404': { $ref: '#/components/responses/UsuarioNoEncontrado' }
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/usuarios/{uuid}/clave:
+    post:
+      tags: [Usuarios]
+      summary: Reiniciar la clave de una persona
+      description: |
+        Genera una clave temporal nueva que vence a las `IAM_CLAVE_TEMPORAL_HORAS` horas, guarda solo su hash, lo
+        registra en la auditoría (`usuario.clave.reinicio`, sin valores) y después pide a API-Auth cerrar las
+        sesiones de la persona. La clave se muestra **una sola vez** (`Cache-Control: no-store`) y API-Auth obliga a
+        cambiarla en el primer ingreso. A una persona que solo entraba con Microsoft le da además una clave.
+      operationId: reiniciarClave
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/UuidPersona'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: Clave reiniciada.
+          headers:
+            Cache-Control:
+              schema: { type: string, example: no-store }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaveReiniciada' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/RechazoSobrePersona' }
+        '404': { $ref: '#/components/responses/UsuarioNoEncontrado' }
+        '419': { $ref: '#/components/responses/Csrf' }
 
   /api/iam/v1/aplicaciones:
     get:
@@ -995,6 +1104,25 @@ components:
                     clave: { type: string, pattern: '^[A-Za-z2-9]{4}-[A-Za-z2-9]{4}-[A-Za-z2-9]{4}$', example: Xk7m-P2qr-9Wzt }
                     vence: { type: string, format: date-time, example: '2026-11-13T12:00:00-03:00' }
 
+    ClaveReiniciada:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [clave_temporal, sesiones_revocadas]
+          properties:
+            clave_temporal:
+              description: Se muestra una sola vez.
+              type: object
+              required: [clave, vence]
+              properties:
+                clave: { type: string, pattern: '^[A-Za-z2-9]{4}-[A-Za-z2-9]{4}-[A-Za-z2-9]{4}$', example: Xk7m-P2qr-9Wzt }
+                vence: { type: string, format: date-time, example: '2026-11-13T12:00:00-03:00' }
+            sesiones_revocadas:
+              type: boolean
+              description: API-Auth confirmó el cierre de las sesiones; con `false` se reintenta con `POST /usuarios/{uuid}/sesiones/revocar`.
+
     EntradaAuditoria:
       type: object
       required: [ocurrido_en, actor, accion, entidad, resultado, motivo, antes, despues, trace_id]
@@ -1075,6 +1203,20 @@ components:
             title: Escalamiento de privilegios
             status: 403
             detail: Para asignar o quitar roles de iam-admin necesita todos los permisos de iam-admin.
+            error: ESCALAMIENTO_DE_PRIVILEGIOS
+    RechazoSobrePersona:
+      description: |
+        Sin el permiso de la ruta (`ACCESO_DENEGADO`), una persona con roles de `iam-admin` sin todos los permisos de
+        `iam-admin` (`ESCALAMIENTO_DE_PRIVILEGIOS`) o una acción sobre uno mismo (`ACCION_SOBRE_SI_MISMO`). Los dos
+        últimos quedan en la auditoría como `rechazado`.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: Escalamiento de privilegios
+            status: 403
+            detail: Para actuar sobre una persona con roles de iam-admin necesita todos los permisos de iam-admin.
             error: ESCALAMIENTO_DE_PRIVILEGIOS
     UsuarioNoEncontrado:
       description: No existe una persona con ese `uuid`, o no tiene formato de UUID (`USUARIO_NO_ENCONTRADO`).
