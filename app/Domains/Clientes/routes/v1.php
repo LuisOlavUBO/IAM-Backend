@@ -1,6 +1,8 @@
 <?php
 
 use App\Domains\Clientes\Features\ListarClientes\ListarClientesEndpoint;
+use App\Domains\Clientes\Features\ReactivarCliente\ReactivarClienteEndpoint;
+use App\Domains\Clientes\Features\RevocarCliente\RevocarClienteEndpoint;
 use App\Domains\Clientes\Features\RotarSecreto\RotarSecretoEndpoint;
 use App\Domains\Clientes\Features\VerCliente\VerClienteEndpoint;
 use Illuminate\Support\Facades\Route;
@@ -15,4 +17,6 @@ Route::middleware('can:iam:clientes.leer')->group(function () {
 
 Route::middleware('can:iam:clientes.administrar')->group(function () {
     Route::post('clientes/{id}/secreto', RotarSecretoEndpoint::class)->name('clientes.secreto.rotar');
+    Route::post('clientes/{id}/revocacion', RevocarClienteEndpoint::class)->name('clientes.revocacion');
+    Route::post('clientes/{id}/reactivacion', ReactivarClienteEndpoint::class)->name('clientes.reactivacion');
 });

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domains\Clientes\Domain\Dto\ClienteParaRotarDto;
+use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
 use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
 use App\Domains\Clientes\Features\RotarSecreto\RotarSecretoCommandHandler;
 use Illuminate\Console\Attributes\Description;
@@ -74,7 +74,7 @@ class RotateSecretCommand extends Command
      * The client by id when the argument is a UUID, otherwise by name; null (after saying why) when there is
      * none or the name is ambiguous.
      */
-    private function buscar(string $cliente): ?ClienteParaRotarDto
+    private function buscar(string $cliente): ?ClienteParaEscribirDto
     {
         if (Str::isUuid($cliente)) {
             $encontrado = $this->clientes->buscar($cliente);

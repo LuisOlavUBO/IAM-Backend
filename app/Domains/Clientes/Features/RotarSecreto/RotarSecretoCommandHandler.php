@@ -19,8 +19,6 @@ use Illuminate\Validation\ValidationException;
  */
 final class RotarSecretoCommandHandler
 {
-    public const IAM_ADMIN = 'iam-admin';
-
     /** The variable of API-IAM's .env that holds the secret of each client of iam-admin. */
     private const VARIABLES_ENV = [
         'iam-admin-portal' => 'UBO_LOGIN_CLIENT_SECRET',
@@ -48,7 +46,7 @@ final class RotarSecretoCommandHandler
         }
 
         // A missing step, not an improper attempt: it is not audited.
-        if ($cliente->aplicacion === self::IAM_ADMIN && $confirmar !== $cliente->nombre) {
+        if ($cliente->esDeIamAdmin() && $confirmar !== $cliente->nombre) {
             throw ValidationException::withMessages([
                 'confirmar' => "Escriba el nombre del cliente ({$cliente->nombre}) para confirmar: API-IAM lo usa y dejará de funcionar hasta actualizar su .env.",
             ]);
@@ -61,7 +59,7 @@ final class RotarSecretoCommandHandler
             $this->auditoria->registrar('cliente.secreto.rotacion', 'cliente', $cliente->id);
         });
 
-        $variableEnv = $cliente->aplicacion === self::IAM_ADMIN ? (self::VARIABLES_ENV[$cliente->nombre] ?? null) : null;
+        $variableEnv = $cliente->esDeIamAdmin() ? (self::VARIABLES_ENV[$cliente->nombre] ?? null) : null;
 
         return new SecretoRotadoDto($secreto->secreto, $variableEnv);
     }

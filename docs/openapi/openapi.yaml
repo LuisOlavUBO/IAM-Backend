@@ -800,6 +800,89 @@ paths:
         '419': { $ref: '#/components/responses/Csrf' }
         '422': { $ref: '#/components/responses/Validacion' }
 
+  /api/iam/v1/clientes/{id}/revocacion:
+    post:
+      tags: [Clientes]
+      summary: Revocar un cliente OAuth
+      description: |
+        Marca el cliente como revocado y lo registra en la auditoría (`cliente.revocacion`, `{"revocado": false}` →
+        `{"revocado": true}`). API-Auth deja de emitir y renovar sus tokens y sus rutas los rechazan; con el cambio
+        `introspeccion-cliente-revocado` de API-Auth, la introspección también reporta inactivos los tokens
+        vigentes (sin él, siguen aceptados por las APIs que introspectan hasta vencer). Si ya estaba revocado,
+        responde 200 sin cambiar nada ni auditar. Los clientes de `iam-admin` no se revocan: el intento responde 409
+        y queda en la auditoría como `rechazado`. Exige `iam:clientes.administrar`.
+      operationId: revocarCliente
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del cliente (el `client_id` OAuth, sin distinguir mayúsculas).
+          schema: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b }
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: El cliente está revocado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EstadoDeRevocacion' }
+              example: { data: { revocado: true } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: El id no es un UUID o no existe un cliente con ese id (`CLIENTE_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: El cliente es de `iam-admin`, que usa la propia API-IAM, y no se revoca (`CLIENTE_DE_IAM_ADMIN`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Cliente de iam-admin
+                status: 409
+                detail: 'El cliente es de iam-admin: API-IAM lo usa y no se puede revocar.'
+                error: CLIENTE_DE_IAM_ADMIN
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/clientes/{id}/reactivacion:
+    post:
+      tags: [Clientes]
+      summary: Reactivar un cliente OAuth
+      description: |
+        Quita la marca de revocado y lo registra en la auditoría (`cliente.reactivacion`, `{"revocado": true}` →
+        `{"revocado": false}`). Los tokens del cliente que no vencieron vuelven a valer: si se revocó por un secreto
+        filtrado, rote el secreto antes de reactivar. Si ya estaba activo, responde 200 sin cambiar nada ni
+        auditar. Los clientes de `iam-admin` sí se reactivan. Exige `iam:clientes.administrar`.
+      operationId: reactivarCliente
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del cliente (el `client_id` OAuth, sin distinguir mayúsculas).
+          schema: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b }
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: El cliente está activo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EstadoDeRevocacion' }
+              example: { data: { revocado: false } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: El id no es un UUID o no existe un cliente con ese id (`CLIENTE_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '419': { $ref: '#/components/responses/Csrf' }
+
   /api/iam/v1/auditoria:
     get:
       tags: [Auditoria]
@@ -1205,6 +1288,18 @@ components:
               type: [string, 'null']
               enum: [UBO_LOGIN_CLIENT_SECRET, UBO_AUTH_CLIENT_SECRET, null]
               description: La variable del `.env` de API-IAM que hay que actualizar (clientes de `iam-admin`); `null` para los demás.
+
+    EstadoDeRevocacion:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [revocado]
+          properties:
+            revocado:
+              type: boolean
+              description: El estado del cliente tras la acción.
 
     EntradaAuditoria:
       type: object

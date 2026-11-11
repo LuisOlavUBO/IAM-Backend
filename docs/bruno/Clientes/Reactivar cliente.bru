@@ -1,0 +1,40 @@
+meta {
+  name: Reactivar cliente
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/clientes/{{clienteId}}/reactivacion
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+tests {
+  test("deja el cliente activo", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.revocado).to.equal(false);
+  });
+}
+
+docs {
+  # Reactivar cliente
+
+  `POST /api/iam/v1/clientes/{id}/reactivacion` · sesión del portal · `iam:clientes.administrar` · CSRF
+
+  Quita la marca de revocado y lo registra en la auditoría (`cliente.reactivacion`). Los tokens del cliente que no vencieron vuelven a valer: si se revocó por un secreto filtrado, rote el secreto antes de reactivar. Si ya estaba activo, responde 200 sin cambios ni auditoría. Los clientes de `iam-admin` sí se reactivan.
+
+  ```json
+  { "data": { "revocado": false } }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `CLIENTE_NO_ENCONTRADO`; 419 sin CSRF.
+}

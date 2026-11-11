@@ -2,7 +2,7 @@
 
 namespace App\Domains\Clientes\Infrastructure;
 
-use App\Domains\Clientes\Domain\Dto\ClienteParaRotarDto;
+use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
 use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
  */
 final class ClientesRepository implements IClientesRepository
 {
-    public function buscar(string $id): ?ClienteParaRotarDto
+    public function buscar(string $id): ?ClienteParaEscribirDto
     {
         $fila = $this->consulta()->where('oauth_clients.id', $id)->first($this->columnas());
 
@@ -37,6 +37,14 @@ final class ClientesRepository implements IClientesRepository
         DB::table('oauth_clients')->where('id', $id)->update(['secret' => $hash, 'updated_at' => now()]);
     }
 
+    public function marcarRevocado(string $id, bool $revocado): bool
+    {
+        return DB::table('oauth_clients')
+            ->where('id', $id)
+            ->where('revoked', ! $revocado)
+            ->update(['revoked' => $revocado, 'updated_at' => now()]) > 0;
+    }
+
     private function consulta(): Builder
     {
         return DB::table('oauth_clients')->join('applications', 'applications.id', '=', 'oauth_clients.application_id');
@@ -46,13 +54,13 @@ final class ClientesRepository implements IClientesRepository
     private function columnas(): array
     {
         return [
-            'oauth_clients.id', 'oauth_clients.name', 'applications.name as aplicacion',
+            'oauth_clients.id', 'oauth_clients.name', 'applications.name as aplicacion', 'oauth_clients.revoked',
             DB::raw('CASE WHEN oauth_clients.secret IS NULL THEN 0 ELSE 1 END AS confidencial'),
         ];
     }
 
-    private static function dto(object $fila): ClienteParaRotarDto
+    private static function dto(object $fila): ClienteParaEscribirDto
     {
-        return new ClienteParaRotarDto(Str::lower($fila->id), $fila->name, $fila->aplicacion, (bool) $fila->confidencial);
+        return new ClienteParaEscribirDto(Str::lower($fila->id), $fila->name, $fila->aplicacion, (bool) $fila->confidencial, (bool) $fila->revoked);
     }
 }

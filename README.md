@@ -168,6 +168,8 @@ El compose fuerza `APP_ENV=production`, `APP_DEBUG=false` y `LOG_CHANNEL=stderr`
 
 **Proxy inverso:** `ubo-nginx-proxy` elige el contenedor por el segmento que sigue a `/api` (`/api/iam/...` → `api-iam-nginx-prod`, por la red externa `proxy`, que debe existir antes de levantar el compose) y pasa la ruta sin reescribirla. Un despliegue nuevo cierra las sesiones del portal (sesión en archivos dentro del contenedor).
 
+**Orden con API-Auth.** La revocación de clientes (`clientes-revocar`) se despliega después de API-Auth `introspeccion-cliente-revocado`. Sin ese cambio todo funciona, pero los tokens vigentes de un cliente revocado siguen aceptados por las APIs que introspectan hasta vencer (máximo 60 minutos).
+
 ## Estructura
 
 ```

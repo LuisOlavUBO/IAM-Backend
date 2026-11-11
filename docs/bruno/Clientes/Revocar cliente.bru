@@ -1,0 +1,42 @@
+meta {
+  name: Revocar cliente
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/clientes/{{clienteId}}/revocacion
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+tests {
+  test("deja el cliente revocado", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.revocado).to.equal(true);
+  });
+}
+
+docs {
+  # Revocar cliente
+
+  `POST /api/iam/v1/clientes/{id}/revocacion` · sesión del portal · `iam:clientes.administrar` · CSRF
+
+  Marca el cliente como revocado y lo registra en la auditoría (`cliente.revocacion`). API-Auth deja de emitir y renovar sus tokens: **el sistema que usa el cliente pierde el acceso de inmediato**. Se deshace con "Reactivar cliente". Si ya estaba revocado, responde 200 sin cambios ni auditoría.
+
+  `clienteId` lo deja "Listar clientes" (el primero de la lista): cámbielo por un cliente de prueba. Los clientes de `iam-admin` no se revocan.
+
+  ```json
+  { "data": { "revocado": true } }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `CLIENTE_NO_ENCONTRADO`; 409 `CLIENTE_DE_IAM_ADMIN` (queda en la auditoría como `rechazado`); 419 sin CSRF.
+}
