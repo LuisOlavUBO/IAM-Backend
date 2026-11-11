@@ -1,7 +1,7 @@
 # clientes Specification
 
 ## Purpose
-Define cómo el portal consulta los clientes OAuth registrados en IAM: el listado con búsqueda y el detalle de cada cliente con su aplicación, sus concesiones, sus redirecciones y sus roles, sin exponer nunca el secreto ni identificadores internos y sin escribir en la base.
+Define cómo el portal consulta los clientes OAuth registrados en IAM (el listado con búsqueda y el detalle de cada cliente con su aplicación, sus concesiones, sus redirecciones y sus roles, sin exponer el secreto ni identificadores internos y sin escribir en la base) y cómo rota el secreto de un cliente confidencial: el secreto nuevo se muestra una sola vez y la rotación queda en la auditoría sin su valor.
 
 ## Requirements
 
