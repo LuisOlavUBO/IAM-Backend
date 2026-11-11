@@ -1,6 +1,7 @@
 <?php
 
 use App\Domains\Clientes\Features\ListarClientes\ListarClientesEndpoint;
+use App\Domains\Clientes\Features\RotarSecreto\RotarSecretoEndpoint;
 use App\Domains\Clientes\Features\VerCliente\VerClienteEndpoint;
 use Illuminate\Support\Facades\Route;
 
@@ -10,4 +11,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('can:iam:clientes.leer')->group(function () {
     Route::get('clientes', ListarClientesEndpoint::class)->name('clientes.listar');
     Route::get('clientes/{id}', VerClienteEndpoint::class)->name('clientes.ver');
+});
+
+Route::middleware('can:iam:clientes.administrar')->group(function () {
+    Route::post('clientes/{id}/secreto', RotarSecretoEndpoint::class)->name('clientes.secreto.rotar');
 });

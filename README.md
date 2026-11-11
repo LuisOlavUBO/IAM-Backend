@@ -76,17 +76,18 @@ php artisan iam:grant-admin ana@ubo.cl --reactivar  # además la reactiva si est
 
 No crea personas ni cambia contraseñas, pide confirmación y queda en la auditoría.
 
-**Procedimiento de emergencia (secreto perdido):** si se pierde la salida de `iam:install` antes de copiar un secreto, se genera uno nuevo y se guarda su hash. Es la única carga manual permitida, mientras no exista `iam:rotate-secret` (cambio `clientes-oauth`):
+**Procedimiento de emergencia (secreto perdido):** si se pierde un secreto (la salida de `iam:install` sin copiar, o el `.env` de un ambiente), se rota con:
 
 ```bash
-php artisan tinker --execute 'echo ($s = Illuminate\Support\Str::random(40)).PHP_EOL.Illuminate\Support\Facades\Hash::make($s).PHP_EOL;'
+php artisan iam:rotate-secret iam-admin-portal   # por nombre; o por id (UUID) si el nombre se repite
 ```
 
-```sql
-UPDATE oauth_clients SET secret = '<hash>', updated_at = SYSDATETIME() WHERE name = 'iam-admin-portal';
-```
+Muestra el ambiente, la base y el cliente, y pide confirmación. Guarda solo el hash del secreto nuevo (el anterior deja de servir de inmediato), lo registra en la auditoría (`cliente.secreto.rotacion`, sin el secreto) y lo imprime **una sola vez**:
 
-El secreto en claro (primera línea) va al `.env`; el hash (segunda línea), al `UPDATE`.
+- para `iam-admin-portal` e `iam-admin-sistema`, la línea del `.env` lista para copiar (`UBO_LOGIN_CLIENT_SECRET=...` o `UBO_AUTH_CLIENT_SECRET=...`). Después se recarga la configuración (`php artisan optimize` o reiniciar el contenedor);
+- para otros clientes, `client_id` y `client_secret`, que se entregan al sistema que lo usa.
+
+Un cliente público (PKCE) no tiene secreto y el comando lo rechaza. Desde el portal, quien tenga `iam:clientes.administrar` rota el secreto en el detalle del cliente.
 
 ## Desarrollo
 
@@ -172,7 +173,7 @@ El compose fuerza `APP_ENV=production`, `APP_DEBUG=false` y `LOG_CHANNEL=stderr`
 ```
 app/Domains/<Dominio>/                dominios: Acceso, Aplicaciones, Usuarios, Clientes, Auditoria
 app/Shared/                           núcleo compartido: Paginacion, Rut, Auditoria (IAuditor)
-app/Console/Commands/                 iam:install, iam:grant-admin, iam:make-feature
+app/Console/Commands/                 iam:install, iam:grant-admin, iam:rotate-secret, iam:make-feature
 routes/web.php                        montaje de los dominios bajo /api/iam/v1 (grupo web, sesión del portal)
 routes/api.php                        /api/iam/v1/salud y docs
 stubs/feature/                        plantillas del generador de casos de uso

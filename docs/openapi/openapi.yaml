@@ -735,6 +735,71 @@ paths:
                 detail: No existe un cliente con ese id.
                 error: CLIENTE_NO_ENCONTRADO
 
+  /api/iam/v1/clientes/{id}/secreto:
+    post:
+      tags: [Clientes]
+      summary: Rotar el secreto de un cliente OAuth
+      description: |
+        Genera un secreto nuevo de 40 caracteres para un cliente confidencial, guarda solo su hash bcrypt y lo
+        registra en la auditoría (`cliente.secreto.rotacion`, sin el secreto ni su hash). El secreto anterior deja de
+        servir de inmediato (los tokens ya emitidos siguen válidos hasta vencer). El secreto se muestra **una sola
+        vez** (`Cache-Control: no-store`). Los clientes de `iam-admin` (`iam-admin-portal`, `iam-admin-sistema`)
+        exigen `confirmar` con el nombre del cliente: rotarlos corta el login del portal o la revocación de sesiones
+        hasta actualizar el `.env` de API-IAM con la variable que indica `variable_env`. Exige
+        `iam:clientes.administrar`.
+      operationId: rotarSecretoCliente
+      security:
+        - sesionPortal: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del cliente (el `client_id` OAuth, sin distinguir mayúsculas).
+          schema: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b }
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirmar:
+                  type: [string, 'null']
+                  maxLength: 255
+                  description: El nombre del cliente. Obligatorio solo para los clientes de `iam-admin`.
+                  example: iam-admin-portal
+      responses:
+        '200':
+          description: Secreto rotado. No se vuelve a mostrar.
+          headers:
+            Cache-Control:
+              description: '`no-store`: ni el navegador ni un proxy guardan la respuesta.'
+              schema: { type: string, example: no-store }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SecretoRotado' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: El id no es un UUID o no existe un cliente con ese id (`CLIENTE_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: El cliente es público (PKCE, sin secreto) y no recibe uno (`CLIENTE_PUBLICO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Cliente público
+                status: 409
+                detail: 'El cliente es público (PKCE): no tiene secreto que rotar.'
+                error: CLIENTE_PUBLICO
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
   /api/iam/v1/auditoria:
     get:
       tags: [Auditoria]
@@ -1122,6 +1187,24 @@ components:
             sesiones_revocadas:
               type: boolean
               description: API-Auth confirmó el cierre de las sesiones; con `false` se reintenta con `POST /usuarios/{uuid}/sesiones/revocar`.
+
+    SecretoRotado:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [secreto, variable_env]
+          properties:
+            secreto:
+              type: string
+              pattern: '^[A-Za-z0-9]{40}$'
+              description: Se muestra una sola vez.
+              example: 7fQx2Lm9Rk4Tz8Wb1Nc6Vd3Hj5Ps0Ya2Ge7Ku9Mi
+            variable_env:
+              type: [string, 'null']
+              enum: [UBO_LOGIN_CLIENT_SECRET, UBO_AUTH_CLIENT_SECRET, null]
+              description: La variable del `.env` de API-IAM que hay que actualizar (clientes de `iam-admin`); `null` para los demás.
 
     EntradaAuditoria:
       type: object
