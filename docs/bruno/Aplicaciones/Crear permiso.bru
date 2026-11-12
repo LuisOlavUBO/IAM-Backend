@@ -1,0 +1,49 @@
+meta {
+  name: Crear permiso
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/permisos
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+}
+
+body:json {
+  {
+    "nombre": "biblioteca:prestamos.leer",
+    "descripcion": "Ver préstamos"
+  }
+}
+
+tests {
+  test("crea el permiso", function () {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.nombre).to.equal("biblioteca:prestamos.leer");
+  });
+}
+
+docs {
+  # Crear permiso
+
+  `POST /api/iam/v1/aplicaciones/{nombre}/permisos` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Cuerpo `{ nombre, descripcion }`, ambos obligatorios. El nombre lleva minúsculas, dígitos y `:._-` (`biblioteca:prestamos.leer`), hasta 100 caracteres, y es único en todo IAM. Queda en la auditoría como `permiso.creacion` con `{nombre, aplicacion, descripcion}`.
+
+  201 `{ "data": { "nombre": "biblioteca:prestamos.leer", "descripcion": "Ver préstamos" } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA`; 409 `PERMISO_EXISTENTE` o `CATALOGO_DE_IAM_ADMIN` (en `iam-admin`, queda en la auditoría como `rechazado`); 419 sin CSRF; 422 `VALIDACION`.
+}

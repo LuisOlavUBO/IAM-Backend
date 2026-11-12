@@ -1,0 +1,49 @@
+meta {
+  name: Editar permiso
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/permisos/{{permisoNombre}}
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+  permisoNombre: biblioteca:prestamos.leer
+}
+
+body:json {
+  {
+    "descripcion": "Ver los préstamos vigentes"
+  }
+}
+
+tests {
+  test("cambia la descripción", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.descripcion).to.equal("Ver los préstamos vigentes");
+  });
+}
+
+docs {
+  # Editar permiso
+
+  `PATCH /api/iam/v1/aplicaciones/{nombre}/permisos/{permiso}` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Cuerpo `{ descripcion }`, obligatoria. El nombre no se cambia. Queda en la auditoría como `permiso.edicion` con la descripción anterior y la nueva; la misma descripción responde 200 sin cambios ni auditoría.
+
+  200 `{ "data": { "nombre": "biblioteca:prestamos.leer", "descripcion": "Ver los préstamos vigentes" } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA` o `PERMISO_NO_ENCONTRADO` (también si el permiso es de otra aplicación); 409 `CATALOGO_DE_IAM_ADMIN`; 419 sin CSRF; 422 `VALIDACION`.
+}

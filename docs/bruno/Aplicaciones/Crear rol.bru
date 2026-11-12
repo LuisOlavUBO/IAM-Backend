@@ -1,0 +1,49 @@
+meta {
+  name: Crear rol
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+}
+
+body:json {
+  {
+    "nombre": "bibliotecario",
+    "descripcion": "Presta libros"
+  }
+}
+
+tests {
+  test("crea el rol sin permisos", function () {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.permisos).to.be.an("array").that.is.empty;
+  });
+}
+
+docs {
+  # Crear rol
+
+  `POST /api/iam/v1/aplicaciones/{nombre}/roles` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Cuerpo `{ nombre, descripcion? }`. El nombre lleva letras, dígitos, espacios o `._-`, sin `/`, hasta 100 caracteres, y es único en la aplicación sin distinguir mayúsculas. El rol nace sin permisos. Queda en la auditoría como `rol.creacion` con `{nombre: "aplicacion/rol", descripcion}`.
+
+  201 `{ "data": { "nombre": "bibliotecario", "descripcion": "Presta libros", "permisos": [] } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA`; 409 `ROL_EXISTENTE` o `CATALOGO_DE_IAM_ADMIN` (en `iam-admin`, queda en la auditoría como `rechazado`); 419 sin CSRF; 422 `VALIDACION`.
+}

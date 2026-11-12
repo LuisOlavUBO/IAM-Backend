@@ -1,0 +1,49 @@
+meta {
+  name: Cambiar permisos de rol
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/roles/{{rolNombre}}/permisos
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+  rolNombre: bibliotecario
+}
+
+body:json {
+  {
+    "permisos": ["biblioteca:prestamos.leer", "geografia:leer"]
+  }
+}
+
+tests {
+  test("deja los permisos pedidos", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.permisos).to.be.an("array");
+  });
+}
+
+docs {
+  # Cambiar permisos de rol
+
+  `PUT /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/permisos` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Cuerpo `{ permisos: [nombres] }`: la lista completa, de cualquier aplicación (vacía quita todos). Cada permiso agregado queda en la auditoría como `rol.permiso.asignacion` y cada quitado como `rol.permiso.retiro`, con `{permiso}`. La misma lista responde 200 sin cambios ni auditoría. Rige desde el siguiente token (login o refresh) de quienes tienen el rol.
+
+  200 `{ "data": { "permisos": ["biblioteca:prestamos.leer", "geografia:leer"] } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA` o `ROL_NO_ENCONTRADO`; 409 `CATALOGO_DE_IAM_ADMIN` (un rol de `iam-admin`, o un permiso de `iam-admin` para otro rol; queda en la auditoría como `rechazado`); 419 sin CSRF; 422 `VALIDACION` (`errores.permisos` con los que no existen).
+}

@@ -28,7 +28,13 @@ info:
     | `USUARIO_NO_ENCONTRADO` | 404 | No existe una persona con ese `uuid` |
     | `APLICACION_NO_ENCONTRADA` | 404 | No existe una aplicación con ese nombre |
     | `CLIENTE_NO_ENCONTRADO` | 404 | No existe un cliente OAuth con ese id |
+    | `PERMISO_NO_ENCONTRADO` | 404 | La aplicación no tiene un permiso con ese nombre |
+    | `ROL_NO_ENCONTRADO` | 404 | La aplicación no tiene un rol con ese nombre |
     | `ROL_NO_ASIGNADO` | 404 | La persona o el cliente no tiene ese rol |
+    | `APLICACION_EXISTENTE` | 409 | Ya existe una aplicación con ese nombre |
+    | `PERMISO_EXISTENTE` | 409 | Ya existe un permiso con ese nombre, en cualquier aplicación |
+    | `ROL_EXISTENTE` | 409 | La aplicación ya tiene un rol con ese nombre (sin distinguir mayúsculas) |
+    | `CATALOGO_DE_IAM_ADMIN` | 409 | Crear, editar o cambiar los permisos de algo de `iam-admin`, o dar un permiso de `iam-admin` a un rol de otra aplicación |
     | `CLIENTE_DE_IAM_ADMIN` | 409 | Revocar un cliente de `iam-admin`, o cambiar sus roles o redirecciones |
     | `CLIENTE_SIN_ROLES` | 409 | Asignar o quitar roles a un cliente de login (`authorization-code`): sus tokens llevan los roles de la persona |
     | `ROL_DE_IAM_ADMIN` | 409 | Asignar a un cliente un rol de `iam-admin` |
@@ -56,7 +62,10 @@ tags:
   - name: Usuarios
     description: Personas de IAM. Consulta con el permiso `iam:usuarios.leer`.
   - name: Aplicaciones
-    description: Sistemas registrados en IAM, con sus permisos y roles. Consulta con el permiso `iam:aplicaciones.leer`.
+    description: |
+      Sistemas registrados en IAM, con sus permisos y roles. Consulta con el permiso `iam:aplicaciones.leer`; crear y
+      describir aplicaciones, permisos y roles, y fijar qué permisos da cada rol, con `iam:aplicaciones.administrar`.
+      El catálogo de `iam-admin` no se cambia desde el portal. API-Auth aplica los cambios desde el siguiente token.
   - name: Clientes
     description: Clientes OAuth, con sus redirecciones y roles. Consulta con el permiso `iam:clientes.leer`. Nunca exponen el secreto.
   - name: Auditoria
@@ -618,6 +627,47 @@ paths:
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '403': { $ref: '#/components/responses/AccesoDenegado' }
         '422': { $ref: '#/components/responses/Validacion' }
+    post:
+      tags: [Aplicaciones]
+      summary: Crear una aplicación
+      description: |
+        Registra un sistema nuevo, sin permisos ni roles, y lo registra en la auditoría (`aplicacion.creacion`, con
+        `nombre` y `descripcion` en `despues`). El nombre es un slug en minúsculas (`^[a-z0-9]+(-[a-z0-9]+)*$`, hasta
+        100 caracteres), único, y no se cambia después. Exige `iam:aplicaciones.administrar`.
+      operationId: crearAplicacion
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties:
+                nombre: { type: string, maxLength: 100, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$', example: biblioteca }
+                descripcion: { type: [string, 'null'], maxLength: 255, example: Sistema de biblioteca }
+      responses:
+        '201':
+          description: La aplicación creada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ElementoDeCatalogo' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '409':
+          description: Ya existe una aplicación con ese nombre (`APLICACION_EXISTENTE`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
 
   /api/iam/v1/aplicaciones/{nombre}:
     get:
@@ -656,6 +706,292 @@ paths:
                 status: 404
                 detail: No existe una aplicación con ese nombre.
                 error: APLICACION_NO_ENCONTRADA
+    patch:
+      tags: [Aplicaciones]
+      summary: Cambiar la descripción de una aplicación
+      description: |
+        Cambia solo la descripción (el nombre no se cambia) y lo registra en la auditoría (`aplicacion.edicion`, con
+        la descripción en `antes` y `despues`). La misma descripción responde 200 sin cambiar nada ni auditar.
+        `iam-admin` responde 409 `CATALOGO_DE_IAM_ADMIN`. Exige `iam:aplicaciones.administrar`.
+      operationId: editarAplicacion
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Descripcion' }
+      responses:
+        '200':
+          description: La aplicación después del cambio.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ElementoDeCatalogo' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404': { $ref: '#/components/responses/AplicacionNoEncontrada' }
+        '409': { $ref: '#/components/responses/CatalogoDeIamAdmin' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/aplicaciones/{nombre}/permisos:
+    post:
+      tags: [Aplicaciones]
+      summary: Crear un permiso de una aplicación
+      description: |
+        Crea un permiso (un scope OAuth) de la aplicación y lo registra en la auditoría (`permiso.creacion`, con
+        `nombre`, `aplicacion` y `descripcion` en `despues`). El nombre lleva minúsculas, dígitos y `:._-`, empieza
+        con letra o dígito, hasta 100 caracteres, y es único en todo IAM (`PERMISO_EXISTENTE`). La descripción es
+        obligatoria. En `iam-admin` responde 409 `CATALOGO_DE_IAM_ADMIN`. Exige `iam:aplicaciones.administrar`.
+      operationId: crearPermiso
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, descripcion]
+              properties:
+                nombre: { type: string, maxLength: 100, pattern: '^[a-z0-9][a-z0-9:._-]*$', example: 'biblioteca:prestamos.leer' }
+                descripcion: { type: string, maxLength: 255, example: Ver préstamos }
+      responses:
+        '201':
+          description: El permiso creado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ElementoDeCatalogo' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404': { $ref: '#/components/responses/AplicacionNoEncontrada' }
+        '409':
+          description: Ya existe un permiso con ese nombre (`PERMISO_EXISTENTE`) o la aplicación es `iam-admin` (`CATALOGO_DE_IAM_ADMIN`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/aplicaciones/{nombre}/permisos/{permiso}:
+    patch:
+      tags: [Aplicaciones]
+      summary: Cambiar la descripción de un permiso
+      description: |
+        Cambia solo la descripción, que es obligatoria, y lo registra en la auditoría (`permiso.edicion`, con la
+        descripción en `antes` y `despues`). La misma descripción responde 200 sin cambiar nada ni auditar. Un
+        permiso de otra aplicación responde 404. Los permisos de `iam-admin` responden 409 `CATALOGO_DE_IAM_ADMIN`.
+        Exige `iam:aplicaciones.administrar`.
+      operationId: editarPermiso
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - name: permiso
+          in: path
+          required: true
+          description: Nombre del permiso.
+          schema: { type: string, example: 'biblioteca:prestamos.leer' }
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [descripcion]
+              properties:
+                descripcion: { type: string, maxLength: 255, example: Ver los préstamos vigentes }
+      responses:
+        '200':
+          description: El permiso después del cambio.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ElementoDeCatalogo' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`) o no tiene ese permiso (`PERMISO_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409': { $ref: '#/components/responses/CatalogoDeIamAdmin' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/aplicaciones/{nombre}/roles:
+    post:
+      tags: [Aplicaciones]
+      summary: Crear un rol de una aplicación
+      description: |
+        Crea un rol de la aplicación, sin permisos, y lo registra en la auditoría (`rol.creacion`, con `nombre` como
+        `aplicacion/rol` y `descripcion` en `despues`). El nombre lleva letras, dígitos, espacios o `._-`, sin `/`,
+        hasta 100 caracteres, y es único en la aplicación sin distinguir mayúsculas (`ROL_EXISTENTE`). En
+        `iam-admin` responde 409 `CATALOGO_DE_IAM_ADMIN`. Exige `iam:aplicaciones.administrar`.
+      operationId: crearRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties:
+                nombre: { type: string, maxLength: 100, pattern: '^[\p{L}\p{N}][\p{L}\p{N} ._-]*$', example: bibliotecario }
+                descripcion: { type: [string, 'null'], maxLength: 255, example: Presta libros }
+      responses:
+        '201':
+          description: El rol creado, sin permisos.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/ElementoDeCatalogo'
+                      - type: object
+                        required: [permisos]
+                        properties:
+                          permisos: { type: array, items: { type: string }, maxItems: 0 }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404': { $ref: '#/components/responses/AplicacionNoEncontrada' }
+        '409':
+          description: La aplicación ya tiene ese rol (`ROL_EXISTENTE`) o es `iam-admin` (`CATALOGO_DE_IAM_ADMIN`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/aplicaciones/{nombre}/roles/{rol}:
+    patch:
+      tags: [Aplicaciones]
+      summary: Cambiar la descripción de un rol
+      description: |
+        Cambia solo la descripción y lo registra en la auditoría (`rol.edicion`, con la descripción en `antes` y
+        `despues`). La misma descripción responde 200 sin cambiar nada ni auditar. Los roles de `iam-admin` responden
+        409 `CATALOGO_DE_IAM_ADMIN`. Exige `iam:aplicaciones.administrar`.
+      operationId: editarRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/NombreRol'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Descripcion' }
+      responses:
+        '200':
+          description: El rol después del cambio.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ElementoDeCatalogo' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`) o no tiene ese rol (`ROL_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409': { $ref: '#/components/responses/CatalogoDeIamAdmin' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422': { $ref: '#/components/responses/Validacion' }
+
+  /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/permisos:
+    put:
+      tags: [Aplicaciones]
+      summary: Fijar los permisos que da un rol
+      description: |
+        Reemplaza los permisos que da el rol por la lista recibida, de cualquier aplicación (una lista vacía los
+        quita todos). Cada permiso agregado queda en la auditoría como `rol.permiso.asignacion` (`{"permiso": …}` en
+        `despues`) y cada quitado como `rol.permiso.retiro` (en `antes`), en la misma transacción. La misma lista
+        responde 200 sin cambiar nada ni auditar. Un permiso inexistente responde 422 sin cambiar nada. Los roles de
+        `iam-admin`, y dar un permiso de `iam-admin` a otro rol, responden 409 `CATALOGO_DE_IAM_ADMIN`. API-Auth
+        aplica el cambio desde el siguiente token de quienes tienen el rol. Exige `iam:aplicaciones.administrar`.
+      operationId: cambiarPermisosDeRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/NombreRol'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permisos]
+              properties:
+                permisos:
+                  type: array
+                  maxItems: 500
+                  items: { type: string, maxLength: 100 }
+                  example: ['biblioteca:prestamos.leer', 'geografia:leer']
+      responses:
+        '200':
+          description: Los permisos que da el rol después del cambio, ordenados.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [permisos]
+                    properties:
+                      permisos:
+                        type: array
+                        items: { type: string }
+              example: { data: { permisos: ['biblioteca:prestamos.leer', 'geografia:leer'] } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`) o no tiene ese rol (`ROL_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409': { $ref: '#/components/responses/CatalogoDeIamAdmin' }
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422':
+          description: Falta la lista o algún permiso no existe (mensaje en `errores.permisos`) (`VALIDACION`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemaValidacion' }
 
   /api/iam/v1/clientes:
     get:
@@ -1271,6 +1607,18 @@ components:
       required: true
       description: Id del cliente (el `client_id` OAuth, sin distinguir mayúsculas).
       schema: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b }
+    NombreAplicacion:
+      name: nombre
+      in: path
+      required: true
+      description: Nombre de la aplicación (sin distinguir mayúsculas).
+      schema: { type: string, example: biblioteca }
+    NombreRol:
+      name: rol
+      in: path
+      required: true
+      description: Nombre del rol en la aplicación (sin distinguir mayúsculas; los espacios van codificados).
+      schema: { type: string, example: bibliotecario }
     XsrfToken:
       name: X-XSRF-TOKEN
       in: header
@@ -1436,6 +1784,24 @@ components:
                 description: Nombres de los permisos que da el rol, ordenados.
                 items: { type: string }
                 example: ['iam:aplicaciones.leer', 'iam:usuarios.administrar', 'iam:usuarios.leer']
+
+    ElementoDeCatalogo:
+      type: object
+      description: Una aplicación, un permiso o un rol después de crearlo o cambiar su descripción. Nunca incluye ids internos.
+      required: [nombre, descripcion]
+      properties:
+        nombre: { type: string, example: biblioteca }
+        descripcion: { type: [string, 'null'], example: Sistema de biblioteca }
+
+    Descripcion:
+      type: object
+      required: [descripcion]
+      properties:
+        descripcion:
+          type: [string, 'null']
+          maxLength: 255
+          description: La nueva descripción; vacía o `null` la borra (salvo en los permisos, donde es obligatoria).
+          example: Sistema de biblioteca
 
     ClienteResumen:
       type: object
@@ -1692,6 +2058,24 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problema' }
+    AplicacionNoEncontrada:
+      description: No existe una aplicación con ese nombre (`APLICACION_NO_ENCONTRADA`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    CatalogoDeIamAdmin:
+      description: |
+        El catálogo de `iam-admin` no se cambia desde el portal (`CATALOGO_DE_IAM_ADMIN`). El intento queda en la
+        auditoría como `rechazado`.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: Catálogo de iam-admin
+            status: 409
+            detail: El catálogo de iam-admin no se cambia desde el portal.
+            error: CATALOGO_DE_IAM_ADMIN
     Csrf:
       description: Falta el token CSRF (header `X-XSRF-TOKEN`) o no es válido.
     Validacion:

@@ -1,0 +1,47 @@
+meta {
+  name: Crear aplicacion
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "nombre": "biblioteca",
+    "descripcion": "Sistema de biblioteca"
+  }
+}
+
+tests {
+  test("crea la aplicación sin permisos ni roles", function () {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.nombre).to.equal("biblioteca");
+  });
+}
+
+docs {
+  # Crear aplicación
+
+  `POST /api/iam/v1/aplicaciones` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Cuerpo `{ nombre, descripcion? }`. El nombre es un slug en minúsculas (`pago-honorarios`), hasta 100 caracteres, único, y no se cambia después. Queda en la auditoría como `aplicacion.creacion` con `{nombre, descripcion}`.
+
+  201 `{ "data": { "nombre": "biblioteca", "descripcion": "Sistema de biblioteca" } }`
+
+  Crea catálogo real que no se puede borrar: úselo solo contra una base de pruebas.
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 409 `APLICACION_EXISTENTE`; 419 sin CSRF; 422 `VALIDACION` (`errores.nombre` con el formato).
+}

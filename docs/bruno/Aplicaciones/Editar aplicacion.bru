@@ -1,0 +1,48 @@
+meta {
+  name: Editar aplicacion
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+}
+
+body:json {
+  {
+    "descripcion": "Préstamos y reservas de la biblioteca"
+  }
+}
+
+tests {
+  test("cambia la descripción", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.descripcion).to.equal("Préstamos y reservas de la biblioteca");
+  });
+}
+
+docs {
+  # Editar aplicación
+
+  `PATCH /api/iam/v1/aplicaciones/{nombre}` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Cuerpo `{ descripcion }` (vacía o `null` la borra). El nombre no se cambia. Queda en la auditoría como `aplicacion.edicion` con la descripción anterior y la nueva; la misma descripción responde 200 sin cambios ni auditoría.
+
+  200 `{ "data": { "nombre": "biblioteca", "descripcion": "Préstamos y reservas de la biblioteca" } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA`; 409 `CATALOGO_DE_IAM_ADMIN` (queda en la auditoría como `rechazado`); 419 sin CSRF; 422 `VALIDACION`.
+}

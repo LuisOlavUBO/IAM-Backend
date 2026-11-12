@@ -4,7 +4,9 @@ namespace App\Domains\Aplicaciones;
 
 use App\Domains\Aplicaciones\Contracts\IDirectorioAplicacionesService;
 use App\Domains\Aplicaciones\Domain\Interfaces\IAplicacionQueryRepository;
+use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
 use App\Domains\Aplicaciones\Infrastructure\AplicacionQueryRepository;
+use App\Domains\Aplicaciones\Infrastructure\CatalogoRepository;
 use App\Domains\Aplicaciones\Infrastructure\DirectorioAplicacionesService;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,5 +20,6 @@ class AplicacionesServiceProvider extends ServiceProvider
     public array $bindings = [
         IAplicacionQueryRepository::class => AplicacionQueryRepository::class,
         IDirectorioAplicacionesService::class => DirectorioAplicacionesService::class,
+        ICatalogoRepository::class => CatalogoRepository::class,
     ];
 }
