@@ -1,7 +1,7 @@
 # aplicaciones Specification
 
 ## Purpose
-Define cómo el portal consulta las aplicaciones registradas en IAM: el listado con búsqueda y el detalle de cada aplicación con sus permisos y sus roles, y qué permisos da cada rol, sin exponer identificadores internos ni escribir en la base.
+Define cómo el portal consulta y administra las aplicaciones registradas en IAM: el listado con búsqueda y el detalle de cada aplicación con sus permisos y sus roles, sin exponer identificadores internos; y crear y describir aplicaciones, permisos y roles, y fijar qué permisos da cada rol, con auditoría y sin tocar el catálogo de `iam-admin`.
 
 ## Requirements
 
