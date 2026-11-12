@@ -1,0 +1,49 @@
+meta {
+  name: Asignar rol
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/clientes/{{clienteId}}/roles
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "aplicacion": "api-maestros",
+    "rol": "maestros-lector"
+  }
+}
+
+tests {
+  test("asigna el rol o ya lo tenía", function () {
+    expect([200, 201]).to.include(res.status);
+    expect(res.body.data.asignado).to.equal(res.status === 201);
+  });
+}
+
+docs {
+  # Asignar rol
+
+  `POST /api/iam/v1/clientes/{id}/roles` · sesión del portal · `iam:clientes.administrar` · CSRF
+
+  Asigna a un cliente de servicio (`client-credentials`) un rol de cualquier aplicación y lo registra en la auditoría (`cliente.rol.asignacion`, `{"rol": "api-maestros/maestros-lector"}`). Sus tokens `client_credentials` llevan los scopes del rol desde el siguiente token. 201 al asignarlo; 200 si ya lo tenía, sin cambios ni auditoría.
+
+  `clienteId` lo deja "Listar clientes" (el primero de la lista): cámbielo por un cliente de servicio de prueba. Los clientes de `iam-admin` no se cambian.
+
+  ```json
+  { "data": { "asignado": true } }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `CLIENTE_NO_ENCONTRADO`; 409 `CLIENTE_SIN_ROLES` (cliente de login), `ROL_DE_IAM_ADMIN` o `CLIENTE_DE_IAM_ADMIN` (quedan en la auditoría como `rechazado`); 419 sin CSRF; 422 `VALIDACION` si el rol no existe (`errores.rol`).
+}

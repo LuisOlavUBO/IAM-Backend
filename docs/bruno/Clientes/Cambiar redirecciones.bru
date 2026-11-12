@@ -1,0 +1,51 @@
+meta {
+  name: Cambiar redirecciones
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/iam/v1/clientes/{{clienteId}}/redirecciones
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "redirecciones": [
+      "https://satelite.ubo.cl/auth/callback",
+      "https://satelite-qa.ubo.cl/auth/callback"
+    ]
+  }
+}
+
+tests {
+  test("deja las redirecciones pedidas", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.redirecciones).to.be.an("array").that.is.not.empty;
+  });
+}
+
+docs {
+  # Cambiar redirecciones
+
+  `PUT /api/iam/v1/clientes/{id}/redirecciones` · sesión del portal · `iam:clientes.administrar` · CSRF
+
+  Reemplaza las redirecciones de un cliente de login (`authorization-code`) por la lista enviada (en ese orden, sin duplicados) y lo registra en la auditoría (`cliente.redirecciones.cambio`, con la lista anterior y la nueva). Si son las mismas, aunque en otro orden, responde 200 sin cambios ni auditoría. Exige al menos una, cada una `https` (o `http` en `localhost`) y sin fragmento.
+
+  `clienteId` lo deja "Listar clientes": cámbielo por un cliente de login de prueba. Los clientes de `iam-admin` no se cambian.
+
+  ```json
+  { "data": { "redirecciones": ["https://satelite.ubo.cl/auth/callback", "https://satelite-qa.ubo.cl/auth/callback"] } }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `CLIENTE_NO_ENCONTRADO`; 409 `CLIENTE_SIN_REDIRECCIONES` (cliente de servicio) o `CLIENTE_DE_IAM_ADMIN` (quedan en la auditoría como `rechazado`); 419 sin CSRF; 422 `VALIDACION` con la lista vacía (`errores.redirecciones`) o una redirección insegura (`errores["redirecciones.<n>"]`).
+}

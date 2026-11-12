@@ -1,7 +1,10 @@
 <?php
 
+use App\Domains\Clientes\Features\AsignarRolACliente\AsignarRolAClienteEndpoint;
+use App\Domains\Clientes\Features\CambiarRedirecciones\CambiarRedireccionesEndpoint;
 use App\Domains\Clientes\Features\CrearCliente\CrearClienteEndpoint;
 use App\Domains\Clientes\Features\ListarClientes\ListarClientesEndpoint;
+use App\Domains\Clientes\Features\QuitarRolACliente\QuitarRolAClienteEndpoint;
 use App\Domains\Clientes\Features\ReactivarCliente\ReactivarClienteEndpoint;
 use App\Domains\Clientes\Features\RevocarCliente\RevocarClienteEndpoint;
 use App\Domains\Clientes\Features\RotarSecreto\RotarSecretoEndpoint;
@@ -21,4 +24,7 @@ Route::middleware('can:iam:clientes.administrar')->group(function () {
     Route::post('clientes/{id}/secreto', RotarSecretoEndpoint::class)->name('clientes.secreto.rotar');
     Route::post('clientes/{id}/revocacion', RevocarClienteEndpoint::class)->name('clientes.revocacion');
     Route::post('clientes/{id}/reactivacion', ReactivarClienteEndpoint::class)->name('clientes.reactivacion');
+    Route::post('clientes/{id}/roles', AsignarRolAClienteEndpoint::class)->name('clientes.roles.asignar');
+    Route::delete('clientes/{id}/roles/{aplicacion}/{rol}', QuitarRolAClienteEndpoint::class)->name('clientes.roles.quitar');
+    Route::put('clientes/{id}/redirecciones', CambiarRedireccionesEndpoint::class)->name('clientes.redirecciones');
 });

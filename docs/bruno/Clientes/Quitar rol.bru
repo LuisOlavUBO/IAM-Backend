@@ -1,0 +1,42 @@
+meta {
+  name: Quitar rol
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/api/iam/v1/clientes/{{clienteId}}/roles/api-maestros/maestros-lector
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+tests {
+  test("quita el rol", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.quitado).to.equal(true);
+  });
+}
+
+docs {
+  # Quitar rol
+
+  `DELETE /api/iam/v1/clientes/{id}/roles/{aplicacion}/{rol}` · sesión del portal · `iam:clientes.administrar` · CSRF
+
+  Quita el rol a un cliente de servicio y lo registra en la auditoría (`cliente.rol.retiro`). Los tokens ya emitidos conservan sus scopes hasta vencer (máximo 60 minutos): el cambio rige en el siguiente token. Si es urgente, revoque el cliente.
+
+  `clienteId` lo deja "Listar clientes": cámbielo por un cliente de servicio de prueba. Los clientes de `iam-admin` no se cambian.
+
+  ```json
+  { "data": { "quitado": true } }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `CLIENTE_NO_ENCONTRADO` o `ROL_NO_ASIGNADO`; 409 `CLIENTE_SIN_ROLES` (cliente de login) o `CLIENTE_DE_IAM_ADMIN` (quedan en la auditoría como `rechazado`); 419 sin CSRF.
+}

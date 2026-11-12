@@ -28,7 +28,11 @@ info:
     | `USUARIO_NO_ENCONTRADO` | 404 | No existe una persona con ese `uuid` |
     | `APLICACION_NO_ENCONTRADA` | 404 | No existe una aplicación con ese nombre |
     | `CLIENTE_NO_ENCONTRADO` | 404 | No existe un cliente OAuth con ese id |
-    | `ROL_NO_ASIGNADO` | 404 | La persona no tiene ese rol |
+    | `ROL_NO_ASIGNADO` | 404 | La persona o el cliente no tiene ese rol |
+    | `CLIENTE_DE_IAM_ADMIN` | 409 | Revocar un cliente de `iam-admin`, o cambiar sus roles o redirecciones |
+    | `CLIENTE_SIN_ROLES` | 409 | Asignar o quitar roles a un cliente de login (`authorization-code`): sus tokens llevan los roles de la persona |
+    | `ROL_DE_IAM_ADMIN` | 409 | Asignar a un cliente un rol de `iam-admin` |
+    | `CLIENTE_SIN_REDIRECCIONES` | 409 | Cambiar las redirecciones de un cliente de servicio (`client-credentials`) |
     | `ESCALAMIENTO_DE_PRIVILEGIOS` | 403 | Asignar o quitar un rol de `iam-admin`, o dar de baja, reactivar o reiniciar la clave de una persona con roles de `iam-admin`, sin todos los permisos de `iam-admin` |
     | `ACCION_SOBRE_SI_MISMO` | 403 | Cambiar los propios roles, cerrar las propias sesiones, darse de baja o reiniciar la propia clave |
     | `ULTIMO_ADMINISTRADOR` | 409 | Quitar `iam-admin/administrador` a la última persona activa que lo tiene, o darla de baja |
@@ -907,7 +911,7 @@ paths:
                 type: about:blank
                 title: Cliente de iam-admin
                 status: 409
-                detail: 'El cliente es de iam-admin: API-IAM lo usa y no se puede revocar.'
+                detail: 'El cliente es de iam-admin: API-IAM lo usa y no se cambia desde el portal.'
                 error: CLIENTE_DE_IAM_ADMIN
         '419': { $ref: '#/components/responses/Csrf' }
 
@@ -945,6 +949,204 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
         '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/clientes/{id}/roles:
+    post:
+      tags: [Clientes]
+      summary: Asignar un rol a un cliente de servicio
+      description: |
+        Asigna a un cliente `client-credentials` un rol de cualquier aplicación y lo registra en la auditoría
+        (`cliente.rol.asignacion`, `despues` `{"rol": "<aplicacion>/<rol>"}`). Sus tokens `client_credentials` llevan
+        los scopes del rol desde el siguiente token. Si ya lo tenía, responde 200 sin cambiar nada ni auditar.
+        Los clientes de login (`CLIENTE_SIN_ROLES`), los roles de `iam-admin` (`ROL_DE_IAM_ADMIN`) y los clientes
+        de `iam-admin` (`CLIENTE_DE_IAM_ADMIN`) responden 409 y el intento queda en la auditoría como `rechazado`.
+        Exige `iam:clientes.administrar`.
+      operationId: asignarRolACliente
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/IdCliente'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aplicacion, rol]
+              properties:
+                aplicacion: { type: string, maxLength: 100, example: api-maestros }
+                rol: { type: string, maxLength: 100, example: maestros-lector }
+      responses:
+        '201':
+          description: Rol asignado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoAsignacion' }
+              example: { data: { asignado: true } }
+        '200':
+          description: El cliente ya tenía el rol; no cambió nada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoAsignacion' }
+              example: { data: { asignado: false } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404': { $ref: '#/components/responses/ClienteNoEncontrado' }
+        '409':
+          description: |
+            El cliente es de login (`CLIENTE_SIN_ROLES`), el rol es de `iam-admin` (`ROL_DE_IAM_ADMIN`) o el cliente
+            es de `iam-admin` (`CLIENTE_DE_IAM_ADMIN`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Rol de iam-admin
+                status: 409
+                detail: Los roles de iam-admin no se asignan a clientes.
+                error: ROL_DE_IAM_ADMIN
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422':
+          description: Faltan `aplicacion` o `rol`, o no existe ese rol en esa aplicación (`VALIDACION`, mensaje en `errores.rol`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemaValidacion' }
+
+  /api/iam/v1/clientes/{id}/roles/{aplicacion}/{rol}:
+    delete:
+      tags: [Clientes]
+      summary: Quitar un rol a un cliente de servicio
+      description: |
+        Quita el rol y lo registra en la auditoría (`cliente.rol.retiro`, `antes` `{"rol": "<aplicacion>/<rol>"}`).
+        Los tokens ya emitidos conservan sus scopes hasta vencer (máximo 60 minutos): el cambio rige en el siguiente
+        token; si es urgente, revoque el cliente. Los clientes de login (`CLIENTE_SIN_ROLES`) y los de `iam-admin`
+        (`CLIENTE_DE_IAM_ADMIN`) responden 409 y el intento queda en la auditoría como `rechazado`. Exige
+        `iam:clientes.administrar`.
+      operationId: quitarRolACliente
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/IdCliente'
+        - name: aplicacion
+          in: path
+          required: true
+          schema: { type: string, example: api-maestros }
+        - name: rol
+          in: path
+          required: true
+          schema: { type: string, example: maestros-lector }
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: Rol quitado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [quitado]
+                    properties:
+                      quitado: { type: boolean, const: true }
+              example: { data: { quitado: true } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe el cliente (`CLIENTE_NO_ENCONTRADO`) o no tiene ese rol (`ROL_NO_ASIGNADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Rol no asignado
+                status: 404
+                detail: El cliente no tiene ese rol.
+                error: ROL_NO_ASIGNADO
+        '409':
+          description: El cliente es de login (`CLIENTE_SIN_ROLES`) o de `iam-admin` (`CLIENTE_DE_IAM_ADMIN`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Cliente sin roles
+                status: 409
+                detail: 'El cliente no es de servicio: sus tokens llevan los roles de la persona, no los del cliente.'
+                error: CLIENTE_SIN_ROLES
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/clientes/{id}/redirecciones:
+    put:
+      tags: [Clientes]
+      summary: Cambiar las redirecciones de un cliente de login
+      description: |
+        Reemplaza las redirecciones de un cliente `authorization-code` por la lista recibida (en ese orden, sin
+        duplicados) y lo registra en la auditoría (`cliente.redirecciones.cambio`, con la lista anterior en `antes`
+        y la nueva en `despues`). Si son las mismas, aunque en otro orden, responde 200 sin cambiar nada ni auditar.
+        Exige al menos una, cada una `https` (o `http` en `localhost`) y sin fragmento. Los clientes de servicio
+        (`CLIENTE_SIN_REDIRECCIONES`) y los de `iam-admin` (`CLIENTE_DE_IAM_ADMIN`) responden 409 y el intento queda
+        en la auditoría como `rechazado`. Exige `iam:clientes.administrar`.
+      operationId: cambiarRedirecciones
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/IdCliente'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [redirecciones]
+              properties:
+                redirecciones:
+                  type: array
+                  minItems: 1
+                  items: { type: string, format: uri, maxLength: 2000 }
+                  example: ['https://satelite.ubo.cl/auth/callback', 'https://satelite-qa.ubo.cl/auth/callback']
+      responses:
+        '200':
+          description: Las redirecciones del cliente después del cambio.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [redirecciones]
+                    properties:
+                      redirecciones:
+                        type: array
+                        items: { type: string, format: uri }
+              example: { data: { redirecciones: ['https://satelite.ubo.cl/auth/callback', 'https://satelite-qa.ubo.cl/auth/callback'] } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404': { $ref: '#/components/responses/ClienteNoEncontrado' }
+        '409':
+          description: El cliente es de servicio (`CLIENTE_SIN_REDIRECCIONES`) o de `iam-admin` (`CLIENTE_DE_IAM_ADMIN`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Cliente sin redirecciones
+                status: 409
+                detail: 'El cliente no es de login: no usa redirecciones.'
+                error: CLIENTE_SIN_REDIRECCIONES
+        '419': { $ref: '#/components/responses/Csrf' }
+        '422':
+          description: |
+            Lista vacía (mensaje en `errores.redirecciones`) o una redirección insegura (mensaje en
+            `errores["redirecciones.<n>"]`) (`VALIDACION`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemaValidacion' }
 
   /api/iam/v1/auditoria:
     get:
@@ -1063,6 +1265,12 @@ components:
       required: true
       description: Identificador público de la persona (sin distinguir mayúsculas).
       schema: { type: string, format: uuid }
+    IdCliente:
+      name: id
+      in: path
+      required: true
+      description: Id del cliente (el `client_id` OAuth, sin distinguir mayúsculas).
+      schema: { type: string, format: uuid, example: 0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b }
     XsrfToken:
       name: X-XSRF-TOKEN
       in: header
@@ -1294,7 +1502,7 @@ components:
           properties:
             asignado:
               type: boolean
-              description: '`true` si se asignó ahora; `false` si la persona ya lo tenía.'
+              description: '`true` si se asignó ahora; `false` si la persona o el cliente ya lo tenía.'
 
     PersonaCreada:
       type: object
@@ -1476,6 +1684,11 @@ components:
             error: ESCALAMIENTO_DE_PRIVILEGIOS
     UsuarioNoEncontrado:
       description: No existe una persona con ese `uuid`, o no tiene formato de UUID (`USUARIO_NO_ENCONTRADO`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    ClienteNoEncontrado:
+      description: El id no es un UUID o no existe un cliente con ese id (`CLIENTE_NO_ENCONTRADO`).
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problema' }

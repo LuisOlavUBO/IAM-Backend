@@ -4,10 +4,12 @@ namespace App\Domains\Clientes\Domain\Interfaces;
 
 use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
 use App\Domains\Clientes\Domain\Dto\NuevoClienteDto;
+use App\Domains\Clientes\Domain\Dto\RolDeAplicacionDto;
 
 /**
- * Write repository of OAuth clients (oauth_clients, owned by API-IAM), the command side of CQRS lite
- * (design D2 of clientes-rotar-secreto, of clientes-revocar and of clientes-crear).
+ * Write repository of OAuth clients (oauth_clients and oauth_client_role, owned by API-IAM), the command side
+ * of CQRS lite (design D2 of clientes-rotar-secreto, of clientes-revocar and of clientes-crear; D3 of
+ * clientes-roles-y-redirecciones).
  */
 interface IClientesRepository
 {
@@ -32,4 +34,21 @@ interface IClientesRepository
 
     /** Sets or clears revoked and touches updated_at; false when the client was already in that state. */
     public function marcarRevocado(string $id, bool $revocado): bool;
+
+    /** The role with that name in that application, of any application, or null. */
+    public function rol(string $aplicacion, string $nombre): ?RolDeAplicacionDto;
+
+    /** Whether the client has that role (oauth_client_role). */
+    public function tieneRol(string $id, int $rolId): bool;
+
+    public function asignarRol(string $id, int $rolId): void;
+
+    public function quitarRol(string $id, int $rolId): void;
+
+    /**
+     * Replaces redirect_uris and touches updated_at.
+     *
+     * @param  list<string>  $redirecciones
+     */
+    public function cambiarRedirecciones(string $id, array $redirecciones): void;
 }
