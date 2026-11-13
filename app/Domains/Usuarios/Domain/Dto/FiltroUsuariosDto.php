@@ -12,6 +12,7 @@ final readonly class FiltroUsuariosDto
 
     /**
      * @param  'activos'|'baja'|'todos'  $estado
+     * @param  '30'|'90'|'nunca'|null  $inactivas  Without activity for more than 30 or 90 days, or never (spec usuarios)
      */
     public function __construct(
         public string $buscar = '',
@@ -19,10 +20,11 @@ final readonly class FiltroUsuariosDto
         public int $pagina = 1,
         public int $porPagina = self::POR_PAGINA,
         public ?string $rut = null,
+        public ?string $inactivas = null,
     ) {}
 
     public function conRut(?string $rut): self
     {
-        return new self($this->buscar, $this->estado, $this->pagina, $this->porPagina, $rut);
+        return new self($this->buscar, $this->estado, $this->pagina, $this->porPagina, $rut, $this->inactivas);
     }
 }

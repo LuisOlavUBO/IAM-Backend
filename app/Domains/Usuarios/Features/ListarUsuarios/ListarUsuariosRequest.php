@@ -18,6 +18,7 @@ final class ListarUsuariosRequest extends FormRequest
         return [
             'buscar' => ['sometimes', 'nullable', 'string', 'max:100'],
             'estado' => ['sometimes', 'in:activos,baja,todos'],
+            'inactivas' => ['sometimes', 'in:30,90,nunca'],
             'pagina' => ['sometimes', 'integer', 'min:1'],
             'por_pagina' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
@@ -30,6 +31,7 @@ final class ListarUsuariosRequest extends FormRequest
             estado: $this->validated('estado', 'todos'),
             pagina: (int) $this->validated('pagina', 1),
             porPagina: (int) $this->validated('por_pagina', FiltroUsuariosDto::POR_PAGINA),
+            inactivas: $this->validated('inactivas'),
         );
     }
 }

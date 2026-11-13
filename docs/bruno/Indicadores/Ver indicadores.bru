@@ -1,0 +1,53 @@
+meta {
+  name: Ver indicadores
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/iam/v1/indicadores
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+tests {
+  test("trae los bloques permitidos y calculado_en", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.be.an("object");
+    const bloques = ["entorno", "personas", "privilegios", "clientes", "auditoria", "senales"];
+    Object.keys(res.body.data).forEach((b) => expect(bloques).to.include(b));
+    expect(res.body.meta.calculado_en).to.be.a("string");
+  });
+}
+
+docs {
+  # Ver indicadores
+
+  `GET /api/iam/v1/indicadores` · sesión del portal · sin permiso propio
+
+  Indicadores para la revisión de accesos. `data` trae solo los bloques que permiten los permisos de quien pide: `entorno` (`iam:aplicaciones.leer`); `personas`, `privilegios` y `senales` (`iam:usuarios.leer`); `clientes` (`iam:clientes.leer`); `auditoria` (`iam:auditoria.leer`). La actividad de una persona es el último access token emitido. Cada bloque se guarda 5 minutos: `meta.calculado_en` es el momento del bloque más antiguo.
+
+  ## Respuesta 200 (resumida)
+
+  ```json
+  {
+    "data": {
+      "entorno": { "aplicaciones": 4, "roles": 12, "permisos": 30, "roles_sin_asignar": 2, "roles_con_mas_personas": [{ "aplicacion": "iam-admin", "rol": "mesa-de-ayuda", "personas": 5 }] },
+      "personas": { "activas": 120, "de_baja": 8, "inactivas_30": 30, "inactivas_90": 12, "sin_actividad": 9, "ingresos_por_dia": [{ "fecha": "2026-11-12", "personas": 41 }], "sesiones_abiertas": 17, "claves_temporales_vencidas": 1, "solo_clave": 6 },
+      "privilegios": { "administradores": 3, "administradores_inactivos": [{ "uuid": "0190f2a4-3c1e-7d2b-9a6f-1b2c3d4e5f60", "nombre": "Ana Pérez", "ultima_actividad": "2026-09-28T12:00:00-03:00" }] },
+      "clientes": { "login": 5, "servicio": 7, "revocados": 1, "tokens_24h": 320, "tokens_7d": 2100, "tokens_por_cliente": [{ "id": "9f1c…", "nombre": "nomina", "tokens_24h": 200, "tokens_7d": 1400 }], "sin_uso_30": [], "sin_roles": [], "secretos_sin_rotar": [] },
+      "auditoria": { "rechazos": { "ESCALAMIENTO_DE_PRIVILEGIOS": 3 }, "cambios_7d": 14 },
+      "senales": { "sesiones_desde_varias_ips": [] }
+    },
+    "meta": { "calculado_en": "2026-11-12T12:00:00-03:00" }
+  }
+  ```
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`.
+}

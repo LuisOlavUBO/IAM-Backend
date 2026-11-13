@@ -1,5 +1,18 @@
 <?php
 
+use App\Domains\Indicadores\Domain\Dto\AuditoriaDto;
+use App\Domains\Indicadores\Domain\Dto\ClientesDto;
+use App\Domains\Indicadores\Domain\Dto\ClienteSenaladoDto;
+use App\Domains\Indicadores\Domain\Dto\EntornoDto;
+use App\Domains\Indicadores\Domain\Dto\IngresosDelDiaDto;
+use App\Domains\Indicadores\Domain\Dto\PersonaConVariasIpsDto;
+use App\Domains\Indicadores\Domain\Dto\PersonaInactivaDto;
+use App\Domains\Indicadores\Domain\Dto\PersonasDto;
+use App\Domains\Indicadores\Domain\Dto\PrivilegiosDto;
+use App\Domains\Indicadores\Domain\Dto\RolConPersonasDto;
+use App\Domains\Indicadores\Domain\Dto\SenalesDto;
+use App\Domains\Indicadores\Domain\Dto\TokensDeClienteDto;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
 return [
@@ -125,6 +138,22 @@ return [
     |
     */
 
-    'serializable_classes' => false,
+    // Only the DTOs of the indicators (spec indicadores, cached 5 minutes) and the dates inside them:
+    // plain data objects, so a leaked APP_KEY gives no gadget chain to exploit.
+    'serializable_classes' => [
+        CarbonImmutable::class,
+        AuditoriaDto::class,
+        ClienteSenaladoDto::class,
+        ClientesDto::class,
+        EntornoDto::class,
+        IngresosDelDiaDto::class,
+        PersonaConVariasIpsDto::class,
+        PersonaInactivaDto::class,
+        PersonasDto::class,
+        PrivilegiosDto::class,
+        RolConPersonasDto::class,
+        SenalesDto::class,
+        TokensDeClienteDto::class,
+    ],
 
 ];

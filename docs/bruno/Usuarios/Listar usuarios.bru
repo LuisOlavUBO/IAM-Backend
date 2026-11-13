@@ -15,6 +15,7 @@ params:query {
   estado: todos
   pagina: 1
   por_pagina: 20
+  ~inactivas: 90
 }
 
 headers {
@@ -34,7 +35,7 @@ docs {
 
   `GET /api/iam/v1/usuarios` · sesión del portal · `iam:usuarios.leer`
 
-  Personas ordenadas por nombre. `buscar` filtra por nombre o correo (sin distinguir mayúsculas) o por un RUT válido, con o sin puntos. `estado`: `activos`, `baja` o `todos`. `por_pagina` de 1 a 100 (20 por omisión).
+  Personas ordenadas por nombre. `buscar` filtra por nombre o correo (sin distinguir mayúsculas) o por un RUT válido, con o sin puntos. `estado`: `activos`, `baja` o `todos`. `inactivas`: `30`, `90` o `nunca` (sin actividad hace más de 30 o 90 días, o nunca; la actividad es el último token emitido, como en Indicadores). `por_pagina` de 1 a 100 (20 por omisión).
 
   ## Respuesta 200
 

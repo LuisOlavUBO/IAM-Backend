@@ -173,7 +173,7 @@ El compose fuerza `APP_ENV=production`, `APP_DEBUG=false` y `LOG_CHANNEL=stderr`
 ## Estructura
 
 ```
-app/Domains/<Dominio>/                dominios: Acceso, Aplicaciones, Usuarios, Clientes, Auditoria
+app/Domains/<Dominio>/                dominios: Acceso, Aplicaciones, Usuarios, Clientes, Auditoria, Indicadores
 app/Shared/                           núcleo compartido: Paginacion, Rut, Auditoria (IAuditor)
 app/Console/Commands/                 iam:install, iam:grant-admin, iam:rotate-secret, iam:make-feature
 routes/web.php                        montaje de los dominios bajo /api/iam/v1 (grupo web, sesión del portal)
