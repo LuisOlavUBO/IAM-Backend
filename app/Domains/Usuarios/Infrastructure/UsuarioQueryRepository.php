@@ -25,7 +25,8 @@ final class UsuarioQueryRepository implements IUsuarioQueryRepository
         $consulta = DB::table('users')
             ->when($filtro->estado === 'activos', fn (Builder $q) => $q->whereNull('disabled_at'))
             ->when($filtro->estado === 'baja', fn (Builder $q) => $q->whereNotNull('disabled_at'))
-            ->when($filtro->buscar !== '', fn (Builder $q) => $this->buscar($q, $filtro));
+            ->when($filtro->buscar !== '', fn (Builder $q) => $this->buscar($q, $filtro))
+            ->when($filtro->inactivas !== null, fn (Builder $q) => $this->inactivas($q, $filtro->inactivas));
 
         $total = (clone $consulta)->count();
 
@@ -113,6 +114,29 @@ final class UsuarioQueryRepository implements IUsuarioQueryRepository
                 ->orWhereRaw("email LIKE ? ESCAPE '!'", [$patron])
                 ->when($filtro->rut !== null, fn (Builder $q) => $q->orWhere('rut', $filtro->rut));
         });
+    }
+
+    /**
+     * Without activity for more than 30 or 90 days, or never. The activity is the newest access token
+     * API-Auth issued to the person (oauth_access_tokens, read only), with the same subquery as the
+     * Indicadores domain (design D2 and D6 of indicadores-portal), so the list and the indicator match.
+     *
+     * @param  '30'|'90'|'nunca'  $inactivas
+     */
+    private function inactivas(Builder $consulta, string $inactivas): void
+    {
+        $actividad = DB::table('oauth_access_tokens')
+            ->whereNotNull('user_id')
+            ->groupBy('user_id')
+            ->select('user_id', DB::raw('MAX(created_at) AS ultima'));
+
+        $consulta->leftJoinSub($actividad, 'actividad', 'actividad.user_id', '=', 'users.id');
+
+        if ($inactivas === 'nunca') {
+            $consulta->whereNull('actividad.ultima');
+        } else {
+            $consulta->where('actividad.ultima', '<', CarbonImmutable::now()->subDays((int) $inactivas));
+        }
     }
 
     /** SQL Server datetime columns carry no zone: they are read in the application's zone. */

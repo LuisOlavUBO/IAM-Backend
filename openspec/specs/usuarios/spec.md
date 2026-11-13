@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define cómo el portal consulta y administra a las personas de IAM: el listado con búsqueda, el detalle de cada persona con sus roles por aplicación, el alta de personas con acceso Microsoft o clave temporal, su baja, reactivación y reinicio de clave, y la asignación y el retiro de roles, todo con sus protecciones, sin exponer nunca credenciales ni identificadores internos.
+Define cómo el portal consulta y administra a las personas de IAM: el listado con búsqueda y filtro de actividad, el detalle de cada persona con sus roles por aplicación, el alta de personas con acceso Microsoft o clave temporal, su baja, reactivación y reinicio de clave, y la asignación y el retiro de roles, todo con sus protecciones, sin exponer nunca credenciales ni identificadores internos.
 
 ## Requirements
 
@@ -305,3 +305,10 @@ La baja, la reactivación y el reinicio de clave MUST responder 403 `ACCION_SOBR
 - **GIVEN** Ana es la única persona activa con `iam-admin/administrador`
 - **WHEN** otra persona con todos los permisos de `iam-admin` pide su baja
 - **THEN** responde 409 `ULTIMO_ADMINISTRADOR` y Ana sigue activa
+
+### Requirement: Filtro por inactividad
+`GET /api/iam/v1/usuarios` SHALL aceptar `inactivas` con `30`, `90` o `nunca` para listar las personas sin actividad hace más de 30 o 90 días, o sin actividad nunca, con la misma definición de actividad que los indicadores (último access token emitido). Un valor distinto MUST responder 422 `VALIDACION`. Se combina con `buscar` y `estado`.
+
+#### Scenario: Desde el indicador
+- **WHEN** se pide `GET /api/iam/v1/usuarios?estado=activos&inactivas=90`
+- **THEN** `data` trae solo las personas activas sin actividad hace más de 90 días y `meta.total` coincide con `personas.inactivas_90` de los indicadores

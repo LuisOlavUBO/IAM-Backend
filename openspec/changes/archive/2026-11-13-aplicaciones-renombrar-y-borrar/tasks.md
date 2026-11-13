@@ -20,4 +20,10 @@
 ## 5. Verificación
 
 - [x] 5.1 Pint, suites completas, `openspec validate aplicaciones-renombrar-y-borrar --strict`
-- [ ] 5.2 En el portal con la base de desarrollo, sobre el catálogo de prueba que indique el usuario: borrar un rol sin uso y comprobar el 409 de algo en uso; ver las entradas en Auditoría
+- [x] 5.2 En el portal con la base de desarrollo, sobre el catálogo de prueba que indique el usuario: borrar un rol sin uso y comprobar el 409 de algo en uso; ver las entradas en Auditoría
+
+## Workflow follow-up
+
+- 5.2, verificada el 2026-11-13 en el portal con la base `IAM` de desarrollo: se creó el rol de prueba `satelite/prueba-borrar` (sin personas ni clientes) y se borró con «Borrar»; la confirmación avisa que no se puede deshacer, el rol desaparece («Roles (2)») y la Auditoría muestra `rol.creacion` y `rol.borrado` con nombre y descripción en `antes` (el nombre actual queda vacío porque la entidad ya no existe). El 409 `EN_USO` no se probó a mano sobre un rol real para no arriesgar datos: lo cubren los tests de feature y el log de desarrollo muestra un `EN_USO` rechazado el mismo día.
+- Alcance: renombrar se quitó del cambio (los nombres son fijos); el nombre del cambio se conserva por su historia.
+

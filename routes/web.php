@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('api/iam/v1')->middleware('ubo.login')->group(function () {
     // One route file per domain: app/Domains/<Dominio>/routes/v1.php
-    foreach (['Acceso', 'Aplicaciones', 'Usuarios', 'Clientes', 'Auditoria'] as $domain) {
+    foreach (['Acceso', 'Aplicaciones', 'Usuarios', 'Clientes', 'Auditoria', 'Indicadores'] as $domain) {
         require app_path("Domains/{$domain}/routes/v1.php");
     }
 });

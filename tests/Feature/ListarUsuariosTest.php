@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Concerns\TablasDeApiAuth;
 use Tests\TestCase;
 use UBO\Common\Login\Testing\UboLogin;
 
@@ -14,6 +16,7 @@ use UBO\Common\Login\Testing\UboLogin;
 class ListarUsuariosTest extends TestCase
 {
     use RefreshDatabase;
+    use TablasDeApiAuth;
 
     private function conPermiso(): void
     {
@@ -167,5 +170,38 @@ class ListarUsuariosTest extends TestCase
 
         $this->assertSame([], $this->getJson('/api/iam/v1/usuarios?buscar=%25')->json('data'));
         $this->assertSame(['Juan_Soto'], array_column($this->getJson('/api/iam/v1/usuarios?buscar=_')->json('data'), 'nombre'));
+    }
+
+    public function test_people_without_activity_for_30_or_90_days_or_never(): void
+    {
+        $this->crearTablasDeApiAuth();
+        $ahora = CarbonImmutable::parse('2026-11-12 12:00:00');
+        $this->travelTo($ahora);
+        $cliente = (string) Str::uuid();
+        foreach (['Ana' => 100, 'Beto' => 45, 'Carla' => 1, 'Eva' => 100] as $nombre => $dias) {
+            $this->persona($nombre, strtolower($nombre).'@ubo.cl', $nombre === 'Eva' ? ['disabled_at' => $ahora] : []);
+            $id = (int) DB::table('users')->where('name', $nombre)->value('id');
+            $this->tokenEmitido($id, $cliente, $ahora->subDays($dias));
+        }
+        $this->tokenEmitido((int) DB::table('users')->where('name', 'Ana')->value('id'), $cliente, $ahora->subDays(200));
+        $this->persona('Dani', 'dani@ubo.cl');
+        $this->conPermiso();
+
+        $nombres = fn (string $query) => array_column($this->getJson('/api/iam/v1/usuarios?'.$query)->assertOk()->json('data'), 'nombre');
+
+        $this->assertSame(['Ana', 'Beto'], $nombres('estado=activos&inactivas=30'));
+        $this->assertSame(['Ana'], $nombres('estado=activos&inactivas=90'));
+        $this->assertSame(['Dani'], $nombres('estado=activos&inactivas=nunca'));
+        $this->assertSame(['Ana', 'Eva'], $nombres('inactivas=90'));
+        $this->assertSame(['Beto'], $nombres('inactivas=30&buscar=beto'));
+    }
+
+    public function test_an_invalid_inactivity_answers_422(): void
+    {
+        $this->conPermiso();
+
+        $this->getJson('/api/iam/v1/usuarios?inactivas=60')
+            ->assertUnprocessable()
+            ->assertJsonPath('error', 'VALIDACION');
     }
 }

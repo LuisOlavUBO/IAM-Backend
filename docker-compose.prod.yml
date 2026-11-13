@@ -33,6 +33,10 @@ services:
             LOG_CHANNEL: stderr
             RUN_MIGRATIONS: "false"
             SESSION_SECURE_COOKIE: "true"
+            # En archivos dentro del contenedor: el default de Laravel (database) escribiría en las tablas
+            # `sessions` y `cache` de API-Auth, que API-IAM nunca debe tocar.
+            SESSION_DRIVER: file
+            CACHE_STORE: file
         expose:
             - "9000"
         restart: unless-stopped

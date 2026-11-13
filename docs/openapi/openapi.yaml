@@ -72,6 +72,8 @@ tags:
     description: Clientes OAuth, con sus redirecciones y roles. Consulta con el permiso `iam:clientes.leer`. Nunca exponen el secreto.
   - name: Auditoria
     description: Registro de las acciones de administración de IAM. Consulta con el permiso `iam:auditoria.leer`.
+  - name: Indicadores
+    description: Indicadores del entorno IAM para el inicio del portal. Solo con sesión; cada bloque depende de un permiso de lectura.
   - name: Salud
     description: Estado del servicio.
 
@@ -191,6 +193,36 @@ paths:
                         description: Token CSRF para el formulario de logout.
         '401': { $ref: '#/components/responses/NoAutenticado' }
 
+  /api/iam/v1/indicadores:
+    get:
+      tags: [Indicadores]
+      summary: Indicadores del entorno
+      description: |
+        Los indicadores para la revisión de accesos del inicio del portal. `data` trae solo los bloques que permiten
+        los permisos de quien pide (sin ninguno, un objeto vacío):
+
+        | Bloque | Permiso |
+        |---|---|
+        | `entorno` | `iam:aplicaciones.leer` |
+        | `personas`, `privilegios`, `senales` | `iam:usuarios.leer` |
+        | `clientes` | `iam:clientes.leer` |
+        | `auditoria` | `iam:auditoria.leer` |
+
+        La **actividad** de una persona es la fecha del último access token que API-Auth le emitió (login o
+        renovación). Las sesiones son las del login central con actividad en las últimas 2 horas. Cada bloque se
+        calcula con consultas agregadas y se guarda 5 minutos; `meta.calculado_en` es el momento del bloque más
+        antiguo. Nunca incluye contraseñas, secretos, tokens ni ids numéricos.
+      operationId: verIndicadores
+      security:
+        - sesionPortal: []
+      responses:
+        '200':
+          description: Los bloques permitidos.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Indicadores' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+
   /api/iam/v1/usuarios:
     get:
       tags: [Usuarios]
@@ -212,6 +244,14 @@ paths:
           in: query
           required: false
           schema: { type: string, enum: [activos, baja, todos], default: todos }
+        - name: inactivas
+          in: query
+          required: false
+          description: |
+            Sin actividad hace más de 30 o 90 días, o sin actividad nunca. La actividad es el último access token emitido
+            a la persona, como en `/indicadores`: con `estado=activos`, `meta.total` coincide con `personas.inactivas_30`,
+            `personas.inactivas_90` o `personas.sin_actividad`.
+          schema: { type: string, enum: ['30', '90', nunca] }
         - name: pagina
           in: query
           required: false
@@ -2305,6 +2345,176 @@ components:
         trace_id:
           type: [string, 'null']
           description: '`trace_id` de la petición o del comando.'
+
+    ClienteIndicado:
+      type: object
+      required: [id, nombre]
+      properties:
+        id: { type: string, format: uuid }
+        nombre: { type: string }
+
+    Indicadores:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          description: Solo los bloques que permiten los permisos de quien pide.
+          properties:
+            entorno:
+              type: object
+              required: [aplicaciones, roles, permisos, roles_sin_asignar, roles_con_mas_personas]
+              properties:
+                aplicaciones: { type: integer }
+                roles: { type: integer }
+                permisos: { type: integer }
+                roles_sin_asignar:
+                  type: integer
+                  description: Roles sin personas ni clientes.
+                roles_con_mas_personas:
+                  type: array
+                  description: Los cinco roles con más personas activas.
+                  items:
+                    type: object
+                    required: [aplicacion, rol, personas]
+                    properties:
+                      aplicacion: { type: string }
+                      rol: { type: string }
+                      personas: { type: integer }
+            personas:
+              type: object
+              required: [activas, de_baja, inactivas_30, inactivas_90, sin_actividad, ingresos_por_dia, sesiones_abiertas, claves_temporales_vencidas, solo_clave]
+              properties:
+                activas: { type: integer }
+                de_baja: { type: integer }
+                inactivas_30:
+                  type: integer
+                  description: Activas cuya última actividad es de hace más de 30 días (no cuenta a las que nunca tuvieron).
+                inactivas_90: { type: integer }
+                sin_actividad:
+                  type: integer
+                  description: Activas sin ningún token emitido.
+                ingresos_por_dia:
+                  type: array
+                  description: Los últimos 30 días, del más antiguo a hoy, con personas distintas que recibieron un token ese día.
+                  items:
+                    type: object
+                    required: [fecha, personas]
+                    properties:
+                      fecha: { type: string, format: date }
+                      personas: { type: integer }
+                sesiones_abiertas:
+                  type: integer
+                  description: Personas con sesión del login central activa en las últimas 2 horas.
+                claves_temporales_vencidas: { type: integer }
+                solo_clave:
+                  type: integer
+                  description: Activas con clave y sin cuenta Microsoft vinculada.
+            privilegios:
+              type: object
+              required: [administradores, administradores_inactivos]
+              properties:
+                administradores:
+                  type: integer
+                  description: Personas activas con `iam-admin/administrador`.
+                administradores_inactivos:
+                  type: array
+                  description: Administradores sin actividad hace más de 30 días o nunca.
+                  items:
+                    type: object
+                    required: [uuid, nombre, ultima_actividad]
+                    properties:
+                      uuid: { type: string, format: uuid }
+                      nombre: { type: string }
+                      ultima_actividad: { type: [string, 'null'], format: date-time }
+            clientes:
+              type: object
+              required: [login, servicio, revocados, tokens_24h, tokens_7d, tokens_por_cliente, sin_uso_30, sin_roles, secretos_sin_rotar]
+              properties:
+                login:
+                  type: integer
+                  description: Clientes no revocados con `authorization_code`.
+                servicio:
+                  type: integer
+                  description: Clientes no revocados con `client_credentials`.
+                revocados: { type: integer }
+                tokens_24h:
+                  type: integer
+                  description: Tokens de servicio (sin persona) emitidos en las últimas 24 horas.
+                tokens_7d: { type: integer }
+                tokens_por_cliente:
+                  type: array
+                  description: Los diez clientes con más tokens de servicio en 7 días.
+                  items:
+                    allOf:
+                      - $ref: '#/components/schemas/ClienteIndicado'
+                      - type: object
+                        required: [tokens_24h, tokens_7d]
+                        properties:
+                          tokens_24h: { type: integer }
+                          tokens_7d: { type: integer }
+                sin_uso_30:
+                  type: array
+                  description: Clientes de servicio activos, creados hace más de 30 días, sin tokens en los últimos 30.
+                  items:
+                    allOf:
+                      - $ref: '#/components/schemas/ClienteIndicado'
+                      - type: object
+                        required: [ultimo_uso]
+                        properties:
+                          ultimo_uso: { type: [string, 'null'], format: date-time }
+                sin_roles:
+                  type: array
+                  description: Clientes de servicio activos sin roles.
+                  items: { $ref: '#/components/schemas/ClienteIndicado' }
+                secretos_sin_rotar:
+                  type: array
+                  description: |
+                    Clientes confidenciales activos cuyo secreto tiene más de 180 días: la última `cliente.secreto.rotacion`
+                    de la auditoría o, si nunca se rotó, la creación.
+                  items:
+                    allOf:
+                      - $ref: '#/components/schemas/ClienteIndicado'
+                      - type: object
+                        required: [secreto_desde]
+                        properties:
+                          secreto_desde: { type: [string, 'null'], format: date-time }
+            auditoria:
+              type: object
+              required: [rechazos, cambios_7d]
+              properties:
+                rechazos:
+                  type: object
+                  description: Rechazos de los últimos 30 días por `motivo`.
+                  additionalProperties: { type: integer }
+                  example: { ESCALAMIENTO_DE_PRIVILEGIOS: 3, ACCION_SOBRE_SI_MISMO: 1 }
+                cambios_7d:
+                  type: integer
+                  description: Acciones aplicadas (`ok`) en los últimos 7 días.
+            senales:
+              type: object
+              required: [sesiones_desde_varias_ips]
+              properties:
+                sesiones_desde_varias_ips:
+                  type: array
+                  description: |
+                    Personas con sesiones del login central abiertas a la vez desde más de una IP (señal débil hasta que
+                    API-Auth registre los eventos de autenticación). No muestra las IP.
+                  items:
+                    type: object
+                    required: [uuid, nombre, ips]
+                    properties:
+                      uuid: { type: string, format: uuid }
+                      nombre: { type: string }
+                      ips: { type: integer }
+        meta:
+          type: object
+          required: [calculado_en]
+          properties:
+            calculado_en:
+              type: string
+              format: date-time
+              description: Cuándo se calculó el bloque más antiguo de la respuesta (se guarda 5 minutos).
 
   responses:
     NoAutenticado:
