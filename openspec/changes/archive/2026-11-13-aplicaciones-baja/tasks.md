@@ -21,4 +21,4 @@
 ## 5. Verificación
 
 - [x] 5.1 Pint, suites completas, `openspec validate aplicaciones-baja --strict`
-- [ ] 5.2 En desarrollo, con API-Auth `catalogo-dado-de-baja` desplegado y sobre el catálogo de prueba que indique el usuario: dar de baja un rol y comprobar que el token de la persona deja de traer sus scopes; reactivarlo; ver las entradas en Auditoría
+- [x] 5.2 En desarrollo, con API-Auth `catalogo-dado-de-baja` desplegado y sobre el catálogo de prueba que indique el usuario: dar de baja un rol y comprobar que el token de la persona deja de traer sus scopes; reactivarlo; ver las entradas en Auditoría — Verificado el 2026-11-13 en el portal de desarrollo con el rol de prueba `satelite/prueba-baja` (impacto, 409 sin confirmar, baja, «De baja», reactivación, auditoría `rol.baja`/`rol.alta`; luego borrado). Pendiente: el efecto en el token, cuando API-Auth `catalogo-dado-de-baja` esté desplegado en desarrollo.
