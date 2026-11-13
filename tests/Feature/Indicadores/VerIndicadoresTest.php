@@ -135,7 +135,8 @@ class VerIndicadoresTest extends TestCase
      */
     public function test_the_blocks_read_back_from_a_serializing_cache(): void
     {
-        config(['cache.default' => 'file']);
+        // Its own folder: the default one is the development cache, where the portal's login keeps its tokens.
+        config(['cache.default' => 'file', 'cache.stores.file.path' => storage_path('framework/cache/tests-indicadores')]);
         Cache::store('file')->flush();
         $admin = $this->persona('Admin olvidado', $this->ahora->subDays(45));
         $iamAdmin = DB::table('applications')->insertGetId(['name' => 'iam-admin']);
