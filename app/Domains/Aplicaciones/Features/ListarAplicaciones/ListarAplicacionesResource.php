@@ -14,7 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 final class ListarAplicacionesResource extends JsonResource
 {
     /**
-     * @return array{nombre: string, descripcion: ?string, permisos: int, roles: int}
+     * @return array{nombre: string, descripcion: ?string, permisos: int, roles: int, baja_desde: ?string}
      */
     public function toArray(Request $request): array
     {
@@ -23,6 +23,7 @@ final class ListarAplicacionesResource extends JsonResource
             'descripcion' => $this->resource->descripcion,
             'permisos' => $this->resource->permisos,
             'roles' => $this->resource->roles,
+            'baja_desde' => $this->resource->bajaDesde?->toIso8601String(),
         ];
     }
 }

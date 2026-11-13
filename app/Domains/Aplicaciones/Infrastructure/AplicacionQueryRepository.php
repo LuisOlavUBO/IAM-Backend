@@ -30,7 +30,7 @@ final class AplicacionQueryRepository implements IAplicacionQueryRepository
             ->orderBy('name')
             ->forPage($filtro->pagina, $filtro->porPagina)
             ->get([
-                'name', 'description',
+                'name', 'description', 'disabled_at',
                 DB::raw('(SELECT COUNT(*) FROM oauth_scopes WHERE oauth_scopes.application_id = applications.id) AS permisos'),
                 DB::raw('(SELECT COUNT(*) FROM roles WHERE roles.application_id = applications.id) AS roles'),
             ])
@@ -39,6 +39,7 @@ final class AplicacionQueryRepository implements IAplicacionQueryRepository
                 $fila->description,
                 (int) $fila->permisos,
                 (int) $fila->roles,
+                self::fecha($fila->disabled_at),
             ))
             ->all();
 
@@ -49,7 +50,7 @@ final class AplicacionQueryRepository implements IAplicacionQueryRepository
     {
         $fila = DB::table('applications')
             ->where('name', $nombre)
-            ->first(['id', 'name', 'description', 'created_at', 'updated_at']);
+            ->first(['id', 'name', 'description', 'created_at', 'updated_at', 'disabled_at']);
 
         if ($fila === null) {
             return null;
@@ -62,6 +63,7 @@ final class AplicacionQueryRepository implements IAplicacionQueryRepository
             self::fecha($fila->updated_at),
             $this->permisos((int) $fila->id),
             $this->roles((int) $fila->id),
+            self::fecha($fila->disabled_at),
         );
     }
 
@@ -91,15 +93,15 @@ final class AplicacionQueryRepository implements IAplicacionQueryRepository
             ->where('roles.application_id', $aplicacionId)
             ->orderBy('roles.name')
             ->orderBy('oauth_scopes.name')
-            ->get(['roles.name as rol', 'roles.description as descripcion', 'oauth_scopes.name as permiso']);
+            ->get(['roles.name as rol', 'roles.description as descripcion', 'roles.disabled_at as baja', 'oauth_scopes.name as permiso']);
 
         /** @var array<string, RolDto> $roles */
         $roles = [];
         foreach ($filas as $fila) {
-            $anterior = $roles[$fila->rol] ?? new RolDto($fila->rol, $fila->descripcion, []);
+            $anterior = $roles[$fila->rol] ?? new RolDto($fila->rol, $fila->descripcion, [], self::fecha($fila->baja));
             $roles[$fila->rol] = $fila->permiso === null
                 ? $anterior
-                : new RolDto($anterior->nombre, $anterior->descripcion, [...$anterior->permisos, $fila->permiso]);
+                : new RolDto($anterior->nombre, $anterior->descripcion, [...$anterior->permisos, $fila->permiso], $anterior->bajaDesde);
         }
 
         return array_values($roles);

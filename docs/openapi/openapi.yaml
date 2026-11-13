@@ -36,6 +36,7 @@ info:
     | `ROL_EXISTENTE` | 409 | La aplicación ya tiene un rol con ese nombre (sin distinguir mayúsculas) |
     | `CATALOGO_DE_IAM_ADMIN` | 409 | Crear, editar, borrar o cambiar los permisos de algo de `iam-admin`, o dar un permiso de `iam-admin` a un rol de otra aplicación |
     | `EN_USO` | 409 | Borrar una aplicación, un permiso o un rol que está en uso; el `impacto` va en el problema |
+    | `BAJA_SIN_CONFIRMAR` | 409 | Dar de baja una aplicación o un rol sin `confirmar_baja: true`; el `impacto` va en el problema |
     | `CLIENTE_DE_IAM_ADMIN` | 409 | Revocar un cliente de `iam-admin`, o cambiar sus roles o redirecciones |
     | `CLIENTE_SIN_ROLES` | 409 | Asignar o quitar roles a un cliente de login (`authorization-code`): sus tokens llevan los roles de la persona |
     | `ROL_DE_IAM_ADMIN` | 409 | Asignar a un cliente un rol de `iam-admin` |
@@ -1004,6 +1005,176 @@ paths:
         '409': { $ref: '#/components/responses/EnUso' }
         '419': { $ref: '#/components/responses/Csrf' }
 
+  /api/iam/v1/aplicaciones/{nombre}/baja:
+    post:
+      tags: [Aplicaciones]
+      summary: Dar de baja una aplicación
+      description: |
+        Retira un sistema de forma reversible: con `disabled_at`, API-Auth no deja entrar a nadie a ella, sus
+        clientes no obtienen tokens y sus permisos no se conceden. No toca permisos, roles, clientes ni asignaciones.
+        Sin `confirmar_baja: true` responde 409 `BAJA_SIN_CONFIRMAR` con el `impacto` (personas con roles en ella y
+        sus clientes) y no cambia nada. Confirmada, se registra en la auditoría (`aplicacion.baja`, con
+        `{"activo": true}` en `antes` y `{"activo": false}` en `despues`); si ya estaba de baja responde 200 sin
+        cambiar nada ni auditar. `iam-admin` responde 409 `CATALOGO_DE_IAM_ADMIN`. Exige
+        `iam:aplicaciones.administrar`.
+      operationId: darDeBajaAplicacion
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConfirmarBaja' }
+      responses:
+        '200':
+          description: Quedó de baja.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [activa]
+                    properties:
+                      activa: { type: boolean, const: false }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409': { $ref: '#/components/responses/BajaSinConfirmar' }
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/aplicaciones/{nombre}/reactivacion:
+    post:
+      tags: [Aplicaciones]
+      summary: Reactivar una aplicación
+      description: |
+        Quita `disabled_at`: todo lo que tenía asignado vuelve a regir desde el siguiente token. Se registra en la
+        auditoría (`aplicacion.alta`, con `{"activo": false}` en `antes` y `{"activo": true}` en `despues`); si ya
+        estaba activa responde 200 sin cambiar nada ni auditar. No pide confirmación. Exige
+        `iam:aplicaciones.administrar`.
+      operationId: reactivarAplicacion
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: Quedó activa.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [activa]
+                    properties:
+                      activa: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/baja:
+    post:
+      tags: [Aplicaciones]
+      summary: Dar de baja un rol
+      description: |
+        Retira un rol de forma reversible: con `disabled_at`, API-Auth deja de contarlo para el acceso, de conceder
+        sus permisos (a personas y clientes) y de ponerlo en la claim `roles`. Las personas y clientes que lo tienen
+        y los permisos que da se conservan. Sin `confirmar_baja: true` responde 409 `BAJA_SIN_CONFIRMAR` con el
+        `impacto` del rol y no cambia nada. Confirmada, se registra en la auditoría (`rol.baja`, con
+        `{"activo": true}` en `antes` y `{"activo": false}` en `despues`); si ya estaba de baja responde 200 sin
+        cambiar nada ni auditar. Los roles de `iam-admin` responden 409 `CATALOGO_DE_IAM_ADMIN`. Exige
+        `iam:aplicaciones.administrar`.
+      operationId: darDeBajaRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/NombreRol'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConfirmarBaja' }
+      responses:
+        '200':
+          description: Quedó de baja.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [activo]
+                    properties:
+                      activo: { type: boolean, const: false }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`) o no tiene ese rol (`ROL_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409': { $ref: '#/components/responses/BajaSinConfirmar' }
+        '419': { $ref: '#/components/responses/Csrf' }
+
+  /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/reactivacion:
+    post:
+      tags: [Aplicaciones]
+      summary: Reactivar un rol
+      description: |
+        Quita `disabled_at`: vuelve a dar acceso y permisos a quienes lo tienen desde el siguiente token. Se registra
+        en la auditoría (`rol.alta`, con `{"activo": false}` en `antes` y `{"activo": true}` en `despues`); si ya
+        estaba activo responde 200 sin cambiar nada ni auditar. No pide confirmación. Exige
+        `iam:aplicaciones.administrar`.
+      operationId: reactivarRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/NombreRol'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          description: Quedó activo.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [activo]
+                    properties:
+                      activo: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`) o no tiene ese rol (`ROL_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '419': { $ref: '#/components/responses/Csrf' }
+
   /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/permisos:
     put:
       tags: [Aplicaciones]
@@ -1746,7 +1917,9 @@ components:
         A quién afecta borrar un elemento del catálogo; solo conteos y nombres, nunca personas. Para una
         aplicación: `permisos`, `roles` y `clientes` (cantidades). Para un permiso: los `roles` que lo dan (como
         `aplicacion/rol`) y la cantidad de `personas` y `clientes` distintos que lo reciben por esos roles. Para un
-        rol: la cantidad de `personas` y `clientes` que lo tienen y sus `permisos`.
+        rol: la cantidad de `personas` y `clientes` que lo tienen y sus `permisos`. Para la baja de una aplicación:
+        la cantidad de `personas` distintas con roles en ella y de sus `clientes`; para la baja de un rol, lo mismo
+        que al borrarlo.
       properties:
         permisos:
           description: Cantidad (aplicación) o nombres de los permisos que da (rol).
@@ -1769,7 +1942,14 @@ components:
           properties:
             impacto:
               $ref: '#/components/schemas/Impacto'
-              description: Solo en `EN_USO`.
+              description: Solo en `EN_USO` y `BAJA_SIN_CONFIRMAR`.
+
+    ConfirmarBaja:
+      type: object
+      properties:
+        confirmar_baja:
+          type: boolean
+          description: Sin `true`, la baja responde 409 `BAJA_SIN_CONFIRMAR` con el `impacto` y no cambia nada.
 
     MetaPaginacion:
       type: object
@@ -1848,7 +2028,7 @@ components:
 
     AplicacionResumen:
       type: object
-      required: [nombre, descripcion, permisos, roles]
+      required: [nombre, descripcion, permisos, roles, baja_desde]
       properties:
         nombre:
           type: string
@@ -1863,15 +2043,23 @@ components:
           type: integer
           description: Cantidad de roles que define.
           example: 2
+        baja_desde:
+          type: [string, 'null']
+          format: date-time
+          description: Desde cuándo está dada de baja; `null` si está activa.
 
     AplicacionDetalle:
       type: object
-      required: [nombre, descripcion, creada, actualizada, permisos, roles]
+      required: [nombre, descripcion, creada, actualizada, baja_desde, permisos, roles]
       properties:
         nombre: { type: string, example: iam-admin }
         descripcion: { type: [string, 'null'] }
         creada: { type: [string, 'null'], format: date-time }
         actualizada: { type: [string, 'null'], format: date-time }
+        baja_desde:
+          type: [string, 'null']
+          format: date-time
+          description: Desde cuándo está dada de baja; `null` si está activa.
         permisos:
           type: array
           description: Permisos de la aplicación, ordenados por nombre.
@@ -1886,7 +2074,7 @@ components:
           description: Roles de la aplicación, ordenados por nombre.
           items:
             type: object
-            required: [nombre, descripcion, permisos]
+            required: [nombre, descripcion, permisos, baja_desde]
             properties:
               nombre: { type: string, example: mesa-de-ayuda }
               descripcion: { type: [string, 'null'] }
@@ -1895,6 +2083,10 @@ components:
                 description: Nombres de los permisos que da el rol, ordenados.
                 items: { type: string }
                 example: ['iam:aplicaciones.leer', 'iam:usuarios.administrar', 'iam:usuarios.leer']
+              baja_desde:
+                type: [string, 'null']
+                format: date-time
+                description: Desde cuándo está dado de baja; `null` si está activo.
 
     ElementoDeCatalogo:
       type: object
@@ -2214,6 +2406,20 @@ components:
             detail: No se borra porque está en uso.
             error: EN_USO
             impacto: { roles: ['biblioteca/bibliotecario'], personas: 3, clientes: 0 }
+    BajaSinConfirmar:
+      description: |
+        Falta `confirmar_baja: true` (`BAJA_SIN_CONFIRMAR`, con el `impacto`) y no cambia nada, o es de `iam-admin`
+        (`CATALOGO_DE_IAM_ADMIN`, auditado como `rechazado`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemaConImpacto' }
+          example:
+            type: about:blank
+            title: Baja sin confirmar
+            status: 409
+            detail: 'Confirma la baja: quienes la usan pierden el acceso o los permisos que da.'
+            error: BAJA_SIN_CONFIRMAR
+            impacto: { personas: 5, clientes: 2 }
     Csrf:
       description: Falta el token CSRF (header `X-XSRF-TOKEN`) o no es válido.
     Validacion:

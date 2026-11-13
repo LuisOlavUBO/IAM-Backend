@@ -1,0 +1,42 @@
+meta {
+  name: Reactivar aplicacion
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/reactivacion
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+}
+
+tests {
+  test("queda activa", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.activa).to.equal(true);
+  });
+}
+
+docs {
+  # Reactivar aplicacion
+
+  `POST /api/iam/v1/aplicaciones/{nombre}/reactivacion` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Quita la baja: todo lo que tenía asignado vuelve a regir desde el siguiente token. Queda en la auditoría como `aplicacion.alta` (`{"activo": false}` → `{"activo": true}`); si ya estaba activa no cambia nada ni audita. No pide confirmación.
+
+  200 `{ "data": { "activa": true } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA`; 419 sin CSRF.
+}

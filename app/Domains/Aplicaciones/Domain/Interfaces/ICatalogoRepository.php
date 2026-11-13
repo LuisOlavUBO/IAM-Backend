@@ -66,6 +66,23 @@ interface ICatalogoRepository
     /** The people and clients that have the role, and the permissions it grants. */
     public function impactoDeRol(int $id): ImpactoDto;
 
+    /** The distinct people with roles in the application and its clients (design D2 of aplicaciones-baja). */
+    public function impactoDeBajaDeAplicacion(int $id): ImpactoDto;
+
+    /**
+     * Sets or clears applications.disabled_at; nothing else changes.
+     *
+     * @return bool Whether it changed: false when it already was in that state
+     */
+    public function cambiarBajaDeAplicacion(int $id, bool $deBaja): bool;
+
+    /**
+     * Sets or clears roles.disabled_at; who has the role and the permissions it grants stay.
+     *
+     * @return bool Whether it changed: false when it already was in that state
+     */
+    public function cambiarBajaDeRol(int $id, bool $deBaja): bool;
+
     /** Only an application without permissions, roles or clients: their foreign keys do not cascade. */
     public function borrarAplicacion(int $id): void;
 

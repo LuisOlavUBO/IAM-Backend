@@ -30,6 +30,8 @@ Desde que API-Auth ya no crea las tablas de IAM (cambio `traspaso-migraciones` d
 2. `php artisan migrate` en **API-Auth** (crea tokens, sesiones, caché y colas).
 3. `php artisan iam:install` en API-IAM (ver [Instalación de un ambiente](#instalación-de-un-ambiente)).
 
+API-Auth lee columnas que crea API-IAM, así que en un ambiente que ya existe la migración de API-IAM va antes que la versión de API-Auth que la usa. Por ejemplo, `agregar_baja_a_aplicaciones_y_roles` (cambio `aplicaciones-baja`) se corre antes de desplegar API-Auth con `catalogo-dado-de-baja`; al revés, API-Auth fallaría al leer `disabled_at`.
+
 ## Portal (BFF) y sesión
 
 El portal es un Angular que se sirve **en el mismo origen** que `/api/iam/*` y usa URLs relativas. Nunca ve un token: el login lo hace API-IAM con el módulo Login de `ubo/common` (Authorization Code con PKCE contra el SSO de IAM) y el navegador solo recibe la cookie de sesión.

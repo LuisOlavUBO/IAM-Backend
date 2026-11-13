@@ -1,0 +1,47 @@
+meta {
+  name: Dar de baja aplicacion
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/baja
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "confirmar_baja": false
+  }
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+}
+
+tests {
+  test("da de baja o pide confirmar", function () {
+    expect([200, 409]).to.include(res.status);
+  });
+}
+
+docs {
+  # Dar de baja aplicacion
+
+  `POST /api/iam/v1/aplicaciones/{nombre}/baja` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Retira un sistema de forma reversible: API-Auth deja de dejar entrar a nadie, sus clientes no obtienen tokens y sus permisos no se conceden. No toca permisos, roles, clientes ni asignaciones. Sin `"confirmar_baja": true` responde 409 `BAJA_SIN_CONFIRMAR` con el `impacto` (`{personas, clientes}`) y no cambia nada. Confirmada, queda en la auditoría como `aplicacion.baja` (`{"activo": true}` → `{"activo": false}`); repetirla no cambia nada ni audita.
+
+  200 `{ "data": { "activa": false } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA`; 409 `BAJA_SIN_CONFIRMAR` o `CATALOGO_DE_IAM_ADMIN` (queda en la auditoría como `rechazado`); 419 sin CSRF.
+}

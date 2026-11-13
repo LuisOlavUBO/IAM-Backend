@@ -20,5 +20,6 @@ final readonly class AplicacionDetalleDto
         public ?CarbonImmutable $actualizada,
         public array $permisos,
         public array $roles,
+        public ?CarbonImmutable $bajaDesde = null,
     ) {}
 }

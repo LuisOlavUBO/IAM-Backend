@@ -1,0 +1,48 @@
+meta {
+  name: Dar de baja rol
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/roles/{{rolNombre}}/baja
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+body:json {
+  {
+    "confirmar_baja": false
+  }
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+  rolNombre: bibliotecario
+}
+
+tests {
+  test("da de baja o pide confirmar", function () {
+    expect([200, 409]).to.include(res.status);
+  });
+}
+
+docs {
+  # Dar de baja rol
+
+  `POST /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/baja` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Retira un rol de forma reversible: API-Auth deja de contarlo para el acceso, de conceder sus permisos y de ponerlo en la claim `roles`. Quienes lo tienen y los permisos que da se conservan. Sin `"confirmar_baja": true` responde 409 `BAJA_SIN_CONFIRMAR` con el `impacto` (`{personas, clientes, permisos}`) y no cambia nada. Confirmada, queda en la auditoría como `rol.baja` (`{"activo": true}` → `{"activo": false}`); repetirla no cambia nada ni audita.
+
+  200 `{ "data": { "activo": false } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA` o `ROL_NO_ENCONTRADO`; 409 `BAJA_SIN_CONFIRMAR` o `CATALOGO_DE_IAM_ADMIN` (queda en la auditoría como `rechazado`); 419 sin CSRF.
+}

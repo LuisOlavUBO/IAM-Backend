@@ -32,7 +32,7 @@ class CrearRolTest extends TestCase
             ->assertExactJson(['data' => ['nombre' => 'bibliotecario', 'descripcion' => 'Presta libros', 'permisos' => []]]);
 
         $this->getJson('/api/iam/v1/aplicaciones/biblioteca')
-            ->assertJsonPath('data.roles', [['nombre' => 'bibliotecario', 'descripcion' => 'Presta libros', 'permisos' => []]]);
+            ->assertJsonPath('data.roles', [['nombre' => 'bibliotecario', 'descripcion' => 'Presta libros', 'permisos' => [], 'baja_desde' => null]]);
 
         $id = (int) DB::table('roles')->where('name', 'bibliotecario')->value('id');
         $entrada = DB::table('iam_auditoria')->sole();

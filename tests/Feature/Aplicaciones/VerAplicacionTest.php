@@ -63,8 +63,8 @@ class VerAplicacionTest extends TestCase
             ->assertJsonPath('data.descripcion', 'Portal de administración de IAM')
             ->assertJsonPath('data.permisos.0', ['nombre' => 'iam:aplicaciones.administrar', 'descripcion' => 'Descripción de iam:aplicaciones.administrar'])
             ->assertJsonPath('data.roles', [
-                ['nombre' => 'administrador', 'descripcion' => 'Administra IAM', 'permisos' => self::PERMISOS],
-                ['nombre' => 'mesa-de-ayuda', 'descripcion' => 'Atiende a personas', 'permisos' => self::MESA_DE_AYUDA],
+                ['nombre' => 'administrador', 'descripcion' => 'Administra IAM', 'permisos' => self::PERMISOS, 'baja_desde' => null],
+                ['nombre' => 'mesa-de-ayuda', 'descripcion' => 'Atiende a personas', 'permisos' => self::MESA_DE_AYUDA, 'baja_desde' => null],
             ]);
 
         $this->assertSame(self::PERMISOS, array_column($respuesta->json('data.permisos'), 'nombre'));
@@ -81,7 +81,7 @@ class VerAplicacionTest extends TestCase
         $this->getJson('/api/iam/v1/aplicaciones/fuas')
             ->assertOk()
             ->assertJsonPath('data.permisos', [])
-            ->assertJsonPath('data.roles', [['nombre' => 'lector', 'descripcion' => null, 'permisos' => []]]);
+            ->assertJsonPath('data.roles', [['nombre' => 'lector', 'descripcion' => null, 'permisos' => [], 'baja_desde' => null]]);
     }
 
     public function test_the_name_in_upper_case_finds_the_application(): void

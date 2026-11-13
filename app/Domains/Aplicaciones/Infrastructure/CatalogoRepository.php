@@ -150,6 +150,27 @@ final class CatalogoRepository implements ICatalogoRepository
         );
     }
 
+    public function impactoDeBajaDeAplicacion(int $id): ImpactoDto
+    {
+        return ImpactoDto::deBajaDeAplicacion(
+            DB::table('role_user')
+                ->whereIn('role_id', DB::table('roles')->where('application_id', $id)->select('id'))
+                ->distinct()
+                ->count('user_id'),
+            DB::table('oauth_clients')->where('application_id', $id)->count(),
+        );
+    }
+
+    public function cambiarBajaDeAplicacion(int $id, bool $deBaja): bool
+    {
+        return $this->cambiarBaja('applications', $id, $deBaja);
+    }
+
+    public function cambiarBajaDeRol(int $id, bool $deBaja): bool
+    {
+        return $this->cambiarBaja('roles', $id, $deBaja);
+    }
+
     public function borrarAplicacion(int $id): void
     {
         DB::table('applications')->where('id', $id)->delete();
@@ -163,6 +184,15 @@ final class CatalogoRepository implements ICatalogoRepository
     public function borrarRol(int $id): void
     {
         DB::table('roles')->where('id', $id)->delete();
+    }
+
+    /** Only the row in the other state is updated, so a repeated call changes nothing and says so. */
+    private function cambiarBaja(string $tabla, int $id, bool $deBaja): bool
+    {
+        return DB::table($tabla)
+            ->where('id', $id)
+            ->when($deBaja, fn (Builder $q) => $q->whereNull('disabled_at'), fn (Builder $q) => $q->whereNotNull('disabled_at'))
+            ->update(['disabled_at' => $deBaja ? now() : null, 'updated_at' => now()]) > 0;
     }
 
     private function consultaDePermisos(): Builder

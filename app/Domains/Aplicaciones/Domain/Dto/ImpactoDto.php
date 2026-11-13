@@ -27,6 +27,15 @@ final readonly class ImpactoDto
     }
 
     /**
+     * Who loses access when the application is disabled (aplicaciones-baja): the distinct people with roles in it
+     * and its clients.
+     */
+    public static function deBajaDeAplicacion(int $personas, int $clientes): self
+    {
+        return new self(['personas' => $personas, 'clientes' => $clientes], $personas + $clientes > 0);
+    }
+
+    /**
      * A permission is in use while some role grants it.
      *
      * @param  list<string>  $roles  The roles that grant it, as "application/role"

@@ -87,8 +87,8 @@ class ListarAplicacionesTest extends TestCase
         $this->getJson('/api/iam/v1/aplicaciones')
             ->assertOk()
             ->assertJsonPath('data', [
-                ['nombre' => 'fuas', 'descripcion' => 'FUAS', 'permisos' => 0, 'roles' => 0],
-                ['nombre' => 'iam-admin', 'descripcion' => 'Portal de administración de IAM', 'permisos' => 7, 'roles' => 2],
+                ['nombre' => 'fuas', 'descripcion' => 'FUAS', 'permisos' => 0, 'roles' => 0, 'baja_desde' => null],
+                ['nombre' => 'iam-admin', 'descripcion' => 'Portal de administración de IAM', 'permisos' => 7, 'roles' => 2, 'baja_desde' => null],
             ]);
     }
 

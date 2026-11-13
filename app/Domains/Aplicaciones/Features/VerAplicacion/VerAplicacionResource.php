@@ -27,11 +27,13 @@ final class VerAplicacionResource extends JsonResource
             'descripcion' => $a->descripcion,
             'creada' => $a->creada?->toIso8601String(),
             'actualizada' => $a->actualizada?->toIso8601String(),
+            'baja_desde' => $a->bajaDesde?->toIso8601String(),
             'permisos' => array_map(fn (PermisoDto $p) => ['nombre' => $p->nombre, 'descripcion' => $p->descripcion], $a->permisos),
             'roles' => array_map(fn (RolDto $r) => [
                 'nombre' => $r->nombre,
                 'descripcion' => $r->descripcion,
                 'permisos' => $r->permisos,
+                'baja_desde' => $r->bajaDesde?->toIso8601String(),
             ], $a->roles),
         ];
     }

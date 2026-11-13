@@ -7,10 +7,14 @@ use App\Domains\Aplicaciones\Features\CambiarPermisosDeRol\CambiarPermisosDeRolE
 use App\Domains\Aplicaciones\Features\CrearAplicacion\CrearAplicacionEndpoint;
 use App\Domains\Aplicaciones\Features\CrearPermiso\CrearPermisoEndpoint;
 use App\Domains\Aplicaciones\Features\CrearRol\CrearRolEndpoint;
+use App\Domains\Aplicaciones\Features\DarDeBajaAplicacion\DarDeBajaAplicacionEndpoint;
+use App\Domains\Aplicaciones\Features\DarDeBajaRol\DarDeBajaRolEndpoint;
 use App\Domains\Aplicaciones\Features\EditarAplicacion\EditarAplicacionEndpoint;
 use App\Domains\Aplicaciones\Features\EditarPermiso\EditarPermisoEndpoint;
 use App\Domains\Aplicaciones\Features\EditarRol\EditarRolEndpoint;
 use App\Domains\Aplicaciones\Features\ListarAplicaciones\ListarAplicacionesEndpoint;
+use App\Domains\Aplicaciones\Features\ReactivarAplicacion\ReactivarAplicacionEndpoint;
+use App\Domains\Aplicaciones\Features\ReactivarRol\ReactivarRolEndpoint;
 use App\Domains\Aplicaciones\Features\VerAplicacion\VerAplicacionEndpoint;
 use Illuminate\Support\Facades\Route;
 
@@ -33,4 +37,8 @@ Route::middleware('can:iam:aplicaciones.administrar')->group(function () {
     Route::delete('aplicaciones/{nombre}', BorrarAplicacionEndpoint::class)->name('aplicaciones.borrar');
     Route::delete('aplicaciones/{nombre}/permisos/{permiso}', BorrarPermisoEndpoint::class)->name('aplicaciones.permisos.borrar');
     Route::delete('aplicaciones/{nombre}/roles/{rol}', BorrarRolEndpoint::class)->name('aplicaciones.roles.borrar');
+    Route::post('aplicaciones/{nombre}/baja', DarDeBajaAplicacionEndpoint::class)->name('aplicaciones.baja');
+    Route::post('aplicaciones/{nombre}/reactivacion', ReactivarAplicacionEndpoint::class)->name('aplicaciones.reactivacion');
+    Route::post('aplicaciones/{nombre}/roles/{rol}/baja', DarDeBajaRolEndpoint::class)->name('aplicaciones.roles.baja');
+    Route::post('aplicaciones/{nombre}/roles/{rol}/reactivacion', ReactivarRolEndpoint::class)->name('aplicaciones.roles.reactivacion');
 });

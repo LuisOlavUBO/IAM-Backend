@@ -2,8 +2,10 @@
 
 namespace App\Domains\Aplicaciones\Domain\Dto;
 
+use Carbon\CarbonImmutable;
+
 /**
- * A role of an application with the names of the permissions it grants, ordered.
+ * A role of an application with the names of the permissions it grants, ordered, and since when it is disabled.
  */
 final readonly class RolDto
 {
@@ -14,5 +16,6 @@ final readonly class RolDto
         public string $nombre,
         public ?string $descripcion,
         public array $permisos,
+        public ?CarbonImmutable $bajaDesde = null,
     ) {}
 }

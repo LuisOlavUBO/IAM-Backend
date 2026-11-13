@@ -1,0 +1,43 @@
+meta {
+  name: Reactivar rol
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/roles/{{rolNombre}}/reactivacion
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+  rolNombre: bibliotecario
+}
+
+tests {
+  test("queda activo", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.activo).to.equal(true);
+  });
+}
+
+docs {
+  # Reactivar rol
+
+  `POST /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/reactivacion` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Quita la baja: vuelve a dar acceso y permisos a quienes lo tienen desde el siguiente token. Queda en la auditoría como `rol.alta` (`{"activo": false}` → `{"activo": true}`); si ya estaba activo no cambia nada ni audita. No pide confirmación.
+
+  200 `{ "data": { "activo": true } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA` o `ROL_NO_ENCONTRADO`; 419 sin CSRF.
+}
