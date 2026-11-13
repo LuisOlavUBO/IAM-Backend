@@ -166,7 +166,7 @@ docker compose -f docker-compose.prod.yml exec app php artisan migrate --force
 
 El compose fuerza `APP_ENV=production`, `APP_DEBUG=false` y `LOG_CHANNEL=stderr` (logs con `docker compose -f docker-compose.prod.yml logs app`). HTTPS se termina en el proxy inverso.
 
-**Proxy inverso:** `ubo-nginx-proxy` elige el contenedor por el segmento que sigue a `/api` (`/api/iam/...` → `api-iam-nginx-prod`, por la red externa `proxy`, que debe existir antes de levantar el compose) y pasa la ruta sin reescribirla. Un despliegue nuevo cierra las sesiones del portal (sesión en archivos dentro del contenedor).
+**Proxy inverso:** `ubo-nginx-proxy` elige el contenedor por el segmento que sigue a `/api` (`/api/iam/...` → `api-iam-nginx-prod`, por la red externa `proxy`, que debe existir antes de levantar el compose) y pasa la ruta sin reescribirla. Un despliegue nuevo cierra las sesiones del portal: el compose fija `SESSION_DRIVER=file` y `CACHE_STORE=file` (archivos dentro del contenedor), porque el valor por defecto de Laravel (`database`) escribiría en las tablas `sessions` y `cache` de API-Auth.
 
 **Orden con API-Auth.** La revocación de clientes (`clientes-revocar`) se despliega después de API-Auth `introspeccion-cliente-revocado`. Sin ese cambio todo funciona, pero los tokens vigentes de un cliente revocado siguen aceptados por las APIs que introspectan hasta vencer (máximo 60 minutos).
 
