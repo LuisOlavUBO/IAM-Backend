@@ -1,5 +1,8 @@
 <?php
 
+use App\Domains\Aplicaciones\Features\BorrarAplicacion\BorrarAplicacionEndpoint;
+use App\Domains\Aplicaciones\Features\BorrarPermiso\BorrarPermisoEndpoint;
+use App\Domains\Aplicaciones\Features\BorrarRol\BorrarRolEndpoint;
 use App\Domains\Aplicaciones\Features\CambiarPermisosDeRol\CambiarPermisosDeRolEndpoint;
 use App\Domains\Aplicaciones\Features\CrearAplicacion\CrearAplicacionEndpoint;
 use App\Domains\Aplicaciones\Features\CrearPermiso\CrearPermisoEndpoint;
@@ -27,4 +30,7 @@ Route::middleware('can:iam:aplicaciones.administrar')->group(function () {
     Route::post('aplicaciones/{nombre}/roles', CrearRolEndpoint::class)->name('aplicaciones.roles.crear');
     Route::patch('aplicaciones/{nombre}/roles/{rol}', EditarRolEndpoint::class)->name('aplicaciones.roles.editar');
     Route::put('aplicaciones/{nombre}/roles/{rol}/permisos', CambiarPermisosDeRolEndpoint::class)->name('aplicaciones.roles.permisos');
+    Route::delete('aplicaciones/{nombre}', BorrarAplicacionEndpoint::class)->name('aplicaciones.borrar');
+    Route::delete('aplicaciones/{nombre}/permisos/{permiso}', BorrarPermisoEndpoint::class)->name('aplicaciones.permisos.borrar');
+    Route::delete('aplicaciones/{nombre}/roles/{rol}', BorrarRolEndpoint::class)->name('aplicaciones.roles.borrar');
 });

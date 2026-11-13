@@ -1,0 +1,42 @@
+meta {
+  name: Borrar rol
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/roles/{{rolNombre}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+  rolNombre: bibliotecaro
+}
+
+tests {
+  test("borra o responde que está en uso", function () {
+    expect([200, 409]).to.include(res.status);
+  });
+}
+
+docs {
+  # Borrar rol
+
+  `DELETE /api/iam/v1/aplicaciones/{nombre}/roles/{rol}` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Borra un rol creado por error; los permisos que daba siguen existiendo. Si alguna persona o cliente lo tiene está en uso: 409 `EN_USO` con el `impacto` (`{personas, clientes, permisos}`), sin borrar nada. Queda en la auditoría como `rol.borrado` con `nombre` (`aplicacion/rol`) y `descripcion` en `antes`.
+
+  200 `{ "data": { "borrado": true } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA` o `ROL_NO_ENCONTRADO`; 409 `EN_USO` o `CATALOGO_DE_IAM_ADMIN` (queda en la auditoría como `rechazado`); 419 sin CSRF.
+}

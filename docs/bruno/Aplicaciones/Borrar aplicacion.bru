@@ -1,0 +1,41 @@
+meta {
+  name: Borrar aplicacion
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca-de-prueba
+}
+
+tests {
+  test("borra o responde que está en uso", function () {
+    expect([200, 409]).to.include(res.status);
+  });
+}
+
+docs {
+  # Borrar aplicacion
+
+  `DELETE /api/iam/v1/aplicaciones/{nombre}` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Borra una aplicación creada por error. Con permisos, roles o clientes está en uso: 409 `EN_USO` con el `impacto` (`{permisos, roles, clientes}`), sin borrar nada (bórrelos antes, o déla de baja). Queda en la auditoría como `aplicacion.borrado` con `nombre` y `descripcion` en `antes`.
+
+  200 `{ "data": { "borrado": true } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA`; 409 `EN_USO` o `CATALOGO_DE_IAM_ADMIN` (queda en la auditoría como `rechazado`); 419 sin CSRF.
+}

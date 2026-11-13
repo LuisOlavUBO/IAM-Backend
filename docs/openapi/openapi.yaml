@@ -34,7 +34,8 @@ info:
     | `APLICACION_EXISTENTE` | 409 | Ya existe una aplicación con ese nombre |
     | `PERMISO_EXISTENTE` | 409 | Ya existe un permiso con ese nombre, en cualquier aplicación |
     | `ROL_EXISTENTE` | 409 | La aplicación ya tiene un rol con ese nombre (sin distinguir mayúsculas) |
-    | `CATALOGO_DE_IAM_ADMIN` | 409 | Crear, editar o cambiar los permisos de algo de `iam-admin`, o dar un permiso de `iam-admin` a un rol de otra aplicación |
+    | `CATALOGO_DE_IAM_ADMIN` | 409 | Crear, editar, borrar o cambiar los permisos de algo de `iam-admin`, o dar un permiso de `iam-admin` a un rol de otra aplicación |
+    | `EN_USO` | 409 | Borrar una aplicación, un permiso o un rol que está en uso; el `impacto` va en el problema |
     | `CLIENTE_DE_IAM_ADMIN` | 409 | Revocar un cliente de `iam-admin`, o cambiar sus roles o redirecciones |
     | `CLIENTE_SIN_ROLES` | 409 | Asignar o quitar roles a un cliente de login (`authorization-code`): sus tokens llevan los roles de la persona |
     | `ROL_DE_IAM_ADMIN` | 409 | Asignar a un cliente un rol de `iam-admin` |
@@ -740,6 +741,27 @@ paths:
         '409': { $ref: '#/components/responses/CatalogoDeIamAdmin' }
         '419': { $ref: '#/components/responses/Csrf' }
         '422': { $ref: '#/components/responses/Validacion' }
+    delete:
+      tags: [Aplicaciones]
+      summary: Borrar una aplicación sin uso
+      description: |
+        Borra una aplicación creada por error y lo registra en la auditoría (`aplicacion.borrado`, con `nombre` y
+        `descripcion` en `antes`). Si tiene permisos, roles o clientes está en uso: responde 409 `EN_USO` con el
+        `impacto` y no borra nada. `iam-admin` responde 409 `CATALOGO_DE_IAM_ADMIN`. Exige
+        `iam:aplicaciones.administrar`.
+      operationId: borrarAplicacion
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200': { $ref: '#/components/responses/Borrado' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404': { $ref: '#/components/responses/AplicacionNoEncontrada' }
+        '409': { $ref: '#/components/responses/EnUso' }
+        '419': { $ref: '#/components/responses/Csrf' }
 
   /api/iam/v1/aplicaciones/{nombre}/permisos:
     post:
@@ -836,6 +858,32 @@ paths:
         '409': { $ref: '#/components/responses/CatalogoDeIamAdmin' }
         '419': { $ref: '#/components/responses/Csrf' }
         '422': { $ref: '#/components/responses/Validacion' }
+    delete:
+      tags: [Aplicaciones]
+      summary: Borrar un permiso sin uso
+      description: |
+        Borra un permiso creado por error y lo registra en la auditoría (`permiso.borrado`, con `nombre` y
+        `descripcion` en `antes`). Si algún rol lo da está en uso: responde 409 `EN_USO` con el `impacto` y no
+        borra nada. Los permisos de `iam-admin` responden 409 `CATALOGO_DE_IAM_ADMIN`. Exige
+        `iam:aplicaciones.administrar`.
+      operationId: borrarPermiso
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/NombrePermiso'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200': { $ref: '#/components/responses/Borrado' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`) o no tiene ese permiso (`PERMISO_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409': { $ref: '#/components/responses/EnUso' }
+        '419': { $ref: '#/components/responses/Csrf' }
 
   /api/iam/v1/aplicaciones/{nombre}/roles:
     post:
@@ -929,6 +977,32 @@ paths:
         '409': { $ref: '#/components/responses/CatalogoDeIamAdmin' }
         '419': { $ref: '#/components/responses/Csrf' }
         '422': { $ref: '#/components/responses/Validacion' }
+    delete:
+      tags: [Aplicaciones]
+      summary: Borrar un rol sin uso
+      description: |
+        Borra un rol creado por error y lo registra en la auditoría (`rol.borrado`, con `nombre` como
+        `aplicacion/rol` y `descripcion` en `antes`); los permisos que daba siguen existiendo. Si alguna persona o
+        cliente lo tiene está en uso: responde 409 `EN_USO` con el `impacto` y no borra nada. Los roles de
+        `iam-admin` responden 409 `CATALOGO_DE_IAM_ADMIN`. Exige `iam:aplicaciones.administrar`.
+      operationId: borrarRol
+      security:
+        - sesionPortal: []
+      parameters:
+        - $ref: '#/components/parameters/NombreAplicacion'
+        - $ref: '#/components/parameters/NombreRol'
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200': { $ref: '#/components/responses/Borrado' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/AccesoDenegado' }
+        '404':
+          description: No existe la aplicación (`APLICACION_NO_ENCONTRADA`) o no tiene ese rol (`ROL_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409': { $ref: '#/components/responses/EnUso' }
+        '419': { $ref: '#/components/responses/Csrf' }
 
   /api/iam/v1/aplicaciones/{nombre}/roles/{rol}/permisos:
     put:
@@ -1613,6 +1687,12 @@ components:
       required: true
       description: Nombre de la aplicación (sin distinguir mayúsculas).
       schema: { type: string, example: biblioteca }
+    NombrePermiso:
+      name: permiso
+      in: path
+      required: true
+      description: Nombre del permiso (sin distinguir mayúsculas).
+      schema: { type: string, example: 'biblioteca:prestamos.leer' }
     NombreRol:
       name: rol
       in: path
@@ -1659,6 +1739,37 @@ components:
               additionalProperties:
                 type: array
                 items: { type: string }
+
+    Impacto:
+      type: object
+      description: |
+        A quién afecta borrar un elemento del catálogo; solo conteos y nombres, nunca personas. Para una
+        aplicación: `permisos`, `roles` y `clientes` (cantidades). Para un permiso: los `roles` que lo dan (como
+        `aplicacion/rol`) y la cantidad de `personas` y `clientes` distintos que lo reciben por esos roles. Para un
+        rol: la cantidad de `personas` y `clientes` que lo tienen y sus `permisos`.
+      properties:
+        permisos:
+          description: Cantidad (aplicación) o nombres de los permisos que da (rol).
+          oneOf:
+            - { type: integer, minimum: 0 }
+            - { type: array, items: { type: string } }
+        roles:
+          description: Cantidad (aplicación) o los roles que dan el permiso, como `aplicacion/rol` (permiso).
+          oneOf:
+            - { type: integer, minimum: 0 }
+            - { type: array, items: { type: string } }
+        personas: { type: integer, minimum: 0 }
+        clientes: { type: integer, minimum: 0 }
+      example: { roles: ['biblioteca/bibliotecario'], personas: 3, clientes: 0 }
+
+    ProblemaConImpacto:
+      allOf:
+        - $ref: '#/components/schemas/Problema'
+        - type: object
+          properties:
+            impacto:
+              $ref: '#/components/schemas/Impacto'
+              description: Solo en `EN_USO`.
 
     MetaPaginacion:
       type: object
@@ -2076,6 +2187,33 @@ components:
             status: 409
             detail: El catálogo de iam-admin no se cambia desde el portal.
             error: CATALOGO_DE_IAM_ADMIN
+    Borrado:
+      description: Se borró.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties:
+              data:
+                type: object
+                required: [borrado]
+                properties:
+                  borrado: { type: boolean, const: true }
+    EnUso:
+      description: |
+        Está en uso (`EN_USO`, con el `impacto`) y no se borra nada, o es de `iam-admin` (`CATALOGO_DE_IAM_ADMIN`,
+        auditado como `rechazado`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemaConImpacto' }
+          example:
+            type: about:blank
+            title: En uso
+            status: 409
+            detail: No se borra porque está en uso.
+            error: EN_USO
+            impacto: { roles: ['biblioteca/bibliotecario'], personas: 3, clientes: 0 }
     Csrf:
       description: Falta el token CSRF (header `X-XSRF-TOKEN`) o no es válido.
     Validacion:

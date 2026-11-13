@@ -3,6 +3,7 @@
 namespace App\Domains\Aplicaciones\Infrastructure;
 
 use App\Domains\Aplicaciones\Domain\Dto\AplicacionParaEscribirDto;
+use App\Domains\Aplicaciones\Domain\Dto\ImpactoDto;
 use App\Domains\Aplicaciones\Domain\Dto\PermisoParaEscribirDto;
 use App\Domains\Aplicaciones\Domain\Dto\RolParaEscribirDto;
 use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
@@ -107,6 +108,61 @@ final class CatalogoRepository implements ICatalogoRepository
     public function quitarPermiso(int $rolId, int $permisoId): void
     {
         DB::table('oauth_scope_role')->where('role_id', $rolId)->where('oauth_scope_id', $permisoId)->delete();
+    }
+
+    public function impactoDeAplicacion(int $id): ImpactoDto
+    {
+        return ImpactoDto::deAplicacion(
+            DB::table('oauth_scopes')->where('application_id', $id)->count(),
+            DB::table('roles')->where('application_id', $id)->count(),
+            DB::table('oauth_clients')->where('application_id', $id)->count(),
+        );
+    }
+
+    public function impactoDePermiso(int $id): ImpactoDto
+    {
+        $roles = DB::table('oauth_scope_role')
+            ->join('roles', 'roles.id', '=', 'oauth_scope_role.role_id')
+            ->join('applications', 'applications.id', '=', 'roles.application_id')
+            ->where('oauth_scope_role.oauth_scope_id', $id)
+            ->orderBy('applications.name')
+            ->orderBy('roles.name')
+            ->get(['applications.name as aplicacion', 'roles.name'])
+            ->map(fn (object $fila) => "{$fila->aplicacion}/{$fila->name}")
+            ->all();
+
+        $porSusRoles = fn (string $tabla) => DB::table($tabla)
+            ->whereIn("{$tabla}.role_id", DB::table('oauth_scope_role')->where('oauth_scope_id', $id)->select('role_id'));
+
+        return ImpactoDto::dePermiso(
+            $roles,
+            $porSusRoles('role_user')->distinct()->count('user_id'),
+            $porSusRoles('oauth_client_role')->distinct()->count('client_id'),
+        );
+    }
+
+    public function impactoDeRol(int $id): ImpactoDto
+    {
+        return ImpactoDto::deRol(
+            DB::table('role_user')->where('role_id', $id)->count(),
+            DB::table('oauth_client_role')->where('role_id', $id)->count(),
+            array_map(fn (PermisoParaEscribirDto $permiso) => $permiso->nombre, $this->permisosDeRol($id)),
+        );
+    }
+
+    public function borrarAplicacion(int $id): void
+    {
+        DB::table('applications')->where('id', $id)->delete();
+    }
+
+    public function borrarPermiso(int $id): void
+    {
+        DB::table('oauth_scopes')->where('id', $id)->delete();
+    }
+
+    public function borrarRol(int $id): void
+    {
+        DB::table('roles')->where('id', $id)->delete();
     }
 
     private function consultaDePermisos(): Builder

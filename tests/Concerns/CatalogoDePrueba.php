@@ -58,6 +58,42 @@ trait CatalogoDePrueba
         return $id;
     }
 
+    /**
+     * A person with those roles ("app/rol").
+     *
+     * @param  list<string>  $roles
+     */
+    protected function persona(array $roles): int
+    {
+        $id = DB::table('users')->insertGetId([
+            'name' => 'Persona', 'email' => fake()->unique()->safeEmail(), 'uuid' => fake()->uuid(),
+        ]);
+        foreach ($roles as $rol) {
+            DB::table('role_user')->insert(['user_id' => $id, 'role_id' => $this->ids[$rol]]);
+        }
+
+        return $id;
+    }
+
+    /**
+     * A service client of that application with those roles ("app/rol").
+     *
+     * @param  list<string>  $roles
+     */
+    protected function cliente(string $aplicacion, array $roles = []): string
+    {
+        $id = fake()->uuid();
+        DB::table('oauth_clients')->insert([
+            'id' => $id, 'name' => 'Cliente', 'redirect_uris' => '[]', 'grant_types' => '["client_credentials"]', 'revoked' => false,
+            'application_id' => $this->ids[$aplicacion],
+        ]);
+        foreach ($roles as $rol) {
+            DB::table('oauth_client_role')->insert(['client_id' => $id, 'role_id' => $this->ids[$rol]]);
+        }
+
+        return $id;
+    }
+
     protected function comoAdmin(): void
     {
         UboLogin::actingAs(id: self::ADMIN, roles: ['administrador'], scopes: ['iam:aplicaciones.leer', 'iam:aplicaciones.administrar']);

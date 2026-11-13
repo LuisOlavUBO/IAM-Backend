@@ -3,6 +3,7 @@
 namespace App\Domains\Aplicaciones\Domain\Interfaces;
 
 use App\Domains\Aplicaciones\Domain\Dto\AplicacionParaEscribirDto;
+use App\Domains\Aplicaciones\Domain\Dto\ImpactoDto;
 use App\Domains\Aplicaciones\Domain\Dto\PermisoParaEscribirDto;
 use App\Domains\Aplicaciones\Domain\Dto\RolParaEscribirDto;
 
@@ -55,4 +56,22 @@ interface ICatalogoRepository
     public function asignarPermiso(int $rolId, int $permisoId): void;
 
     public function quitarPermiso(int $rolId, int $permisoId): void;
+
+    /** How many permissions, roles and clients the application has (design D2 of aplicaciones-renombrar-y-borrar). */
+    public function impactoDeAplicacion(int $id): ImpactoDto;
+
+    /** The roles that grant the permission, and the distinct people and clients that receive it through them. */
+    public function impactoDePermiso(int $id): ImpactoDto;
+
+    /** The people and clients that have the role, and the permissions it grants. */
+    public function impactoDeRol(int $id): ImpactoDto;
+
+    /** Only an application without permissions, roles or clients: their foreign keys do not cascade. */
+    public function borrarAplicacion(int $id): void;
+
+    /** The roles that granted it lose it by the cascade of oauth_scope_role. */
+    public function borrarPermiso(int $id): void;
+
+    /** Its rows of oauth_scope_role go with it by the cascade; the permissions remain. */
+    public function borrarRol(int $id): void;
 }

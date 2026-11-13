@@ -1,0 +1,42 @@
+meta {
+  name: Borrar permiso
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/iam/v1/aplicaciones/{{aplicacionNombre}}/permisos/{{permisoNombre}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+  X-XSRF-TOKEN: {{xsrfToken}}
+  Accept: application/json
+}
+
+vars:pre-request {
+  aplicacionNombre: biblioteca
+  permisoNombre: biblioteca:prestamo.leer
+}
+
+tests {
+  test("borra o responde que está en uso", function () {
+    expect([200, 409]).to.include(res.status);
+  });
+}
+
+docs {
+  # Borrar permiso
+
+  `DELETE /api/iam/v1/aplicaciones/{nombre}/permisos/{permiso}` · sesión del portal · `iam:aplicaciones.administrar` · CSRF
+
+  Borra un permiso creado por error. Si algún rol lo da está en uso: 409 `EN_USO` con el `impacto` (`{roles: ["app/rol"], personas, clientes}`), sin borrar nada. Queda en la auditoría como `permiso.borrado` con `nombre` y `descripcion` en `antes`.
+
+  200 `{ "data": { "borrado": true } }`
+
+  ## Errores
+
+  401 `NO_AUTENTICADO`; 403 `ACCESO_DENEGADO`; 404 `APLICACION_NO_ENCONTRADA` o `PERMISO_NO_ENCONTRADO`; 409 `EN_USO` o `CATALOGO_DE_IAM_ADMIN` (queda en la auditoría como `rechazado`); 419 sin CSRF.
+}
