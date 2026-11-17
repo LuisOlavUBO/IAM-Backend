@@ -2,8 +2,8 @@
 
 namespace App\Domains\Usuarios\Features\VerUsuario;
 
-use App\Domains\Usuarios\Domain\Dto\RolAsignadoDto;
-use App\Domains\Usuarios\Domain\Dto\UsuarioDetalleDto;
+use App\Domains\Usuarios\Dto\RolAsignadoDto;
+use App\Domains\Usuarios\Dto\UsuarioDetalleDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

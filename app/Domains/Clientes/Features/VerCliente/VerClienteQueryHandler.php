@@ -2,9 +2,9 @@
 
 namespace App\Domains\Clientes\Features\VerCliente;
 
-use App\Domains\Clientes\Domain\ClienteNoEncontradoException;
-use App\Domains\Clientes\Domain\Dto\ClienteDetalleDto;
-use App\Domains\Clientes\Domain\Interfaces\IClienteQueryRepository;
+use App\Domains\Clientes\Dto\ClienteDetalleDto;
+use App\Domains\Clientes\Exceptions\ClienteNoEncontradoException;
+use App\Domains\Clientes\Interfaces\IClienteQueryRepository;
 use Illuminate\Support\Str;
 
 /**

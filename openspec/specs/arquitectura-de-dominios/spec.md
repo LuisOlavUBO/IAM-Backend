@@ -14,7 +14,7 @@ El código de negocio SHALL vivir en `app/Domains/<Dominio>/`, y cada caso de us
 - **THEN** contiene `ListarUsuariosEndpoint`, `ListarUsuariosRequest`, `ListarUsuariosQueryHandler` y `ListarUsuariosResource`, y la ruta `GET /api/iam/v1/usuarios` apunta a ese endpoint
 
 ### Requirement: Capas opcionales y registro del dominio
-Las carpetas `Domain/`, `Infrastructure/` y `Contracts/` de un dominio MUST existir solo cuando contienen algo. Cada dominio SHALL registrar qué implementación corresponde a cada interfaz en un `ServiceProvider` propio, listado en `bootstrap/providers.php`, y sus rutas en `routes/v1.php`.
+Las carpetas del núcleo (`Rules/`, `Exceptions/`, `Dto/`, `Interfaces/`), `Infrastructure/` y `Contracts/` de un dominio MUST existir solo cuando contienen algo. Cada dominio SHALL registrar qué implementación corresponde a cada interfaz en un `ServiceProvider` propio, listado en `bootstrap/providers.php`, y sus rutas en `routes/v1.php`.
 
 #### Scenario: Interfaces enlazadas por el dominio
 - **WHEN** se resuelve del contenedor `IUsuarioQueryRepository`
@@ -22,25 +22,53 @@ Las carpetas `Domain/`, `Infrastructure/` y `Contracts/` de un dominio MUST exis
 
 #### Scenario: Dominio sin capas vacías
 - **WHEN** un dominio no tiene núcleo propio, como Acceso
-- **THEN** su carpeta no tiene `Domain/` ni carpetas vacías
+- **THEN** su carpeta no tiene `Rules/`, `Exceptions/`, `Dto/` ni `Interfaces/`, ni carpetas vacías
+
+#### Scenario: Dominio con solo parte del núcleo
+- **WHEN** un dominio no tiene reglas ni excepciones propias, como Auditoria
+- **THEN** su carpeta tiene `Dto/` e `Interfaces/`, y no tiene `Rules/` ni `Exceptions/`
 
 #### Scenario: Dominio sin Contracts
 - **WHEN** ningún otro dominio usa un dominio, como Auditoria
 - **THEN** su carpeta no tiene `Contracts/`
 
 ### Requirement: Organización interna del núcleo
-`Domain/` SHALL guardar en su raíz las entidades, reglas y excepciones, los DTO en `Domain/Dto/` y las interfaces en `Domain/Interfaces/`. `Infrastructure/` y la raíz de `Domain/` MUST NOT tener subcarpetas por tipo hasta que pasen de unos diez archivos.
+El núcleo de un dominio SHALL repartirse en cuatro carpetas al nivel del dominio: `Rules/` (reglas y objetos de valor), `Exceptions/` (excepciones de negocio), `Dto/` (DTO que cruzan las interfaces del dominio) e `Interfaces/` (repositorios y servicios que el dominio necesita). Ningún dominio MUST tener una carpeta `Domain/`. Las carpetas del núcleo e `Infrastructure/` MUST NOT tener subcarpetas hasta que pasen de unos diez archivos.
 
 #### Scenario: Núcleo de Usuarios
-- **WHEN** se revisa `app/Domains/Usuarios/Domain/`
-- **THEN** contiene `ClaveTemporal` y `UsuarioNoEncontradoException` en la raíz, los DTO en `Dto/` y `IUsuarioQueryRepository` en `Interfaces/`, sin otras subcarpetas
+- **WHEN** se revisa `app/Domains/Usuarios/`
+- **THEN** contiene `ClaveTemporal` y `ReglasDeRoles` en `Rules/`, `UsuarioNoEncontradoException` en `Exceptions/`, `UsuarioDetalleDto` en `Dto/` e `IUsuarioQueryRepository` en `Interfaces/`, sin subcarpetas dentro de ellas
+
+#### Scenario: Sin carpeta Domain
+- **WHEN** se buscan carpetas `app/Domains/*/Domain/`
+- **THEN** no existe ninguna
+
+#### Scenario: Carpeta fuera de la estructura
+- **GIVEN** un archivo en `app/Domains/Usuarios/Domain/X.php` (o en cualquier carpeta del dominio que no sea `Features`, `Rules`, `Exceptions`, `Dto`, `Interfaces`, `Infrastructure`, `Contracts` ni `routes`)
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la carpeta no reconocida
 
 ### Requirement: Dependencias dentro de un dominio
-Las dependencias SHALL ir hacia adentro: `Features` puede usar `Domain`, `Contracts` y `Shared`; `Infrastructure` implementa las interfaces de `Domain/Interfaces` y de `Contracts`. `Domain` MUST NOT depender de `Features`, de `Infrastructure`, de `Contracts` ni de clases HTTP. Un caso de uso MUST NOT importar clases de otro caso de uso.
+Las dependencias SHALL ir hacia adentro: `Features` puede usar el núcleo, `Contracts` y `Shared`; `Infrastructure` implementa las interfaces de `Interfaces/` y de `Contracts`. El núcleo (`Rules`, `Exceptions`, `Dto`, `Interfaces`) MUST NOT depender de `Features`, de `Infrastructure`, de `Contracts` ni de clases HTTP, y sus cuatro carpetas pueden usarse entre sí. Un caso de uso MUST NOT importar clases de otro caso de uso.
 
 #### Scenario: Handler que depende de un repositorio
 - **WHEN** un handler necesita datos de la base
-- **THEN** recibe una interfaz de `Domain/Interfaces/` por constructor, y su implementación en `Infrastructure/` se enlaza en el `ServiceProvider` del dominio
+- **THEN** recibe una interfaz de `Interfaces/` por constructor, y su implementación en `Infrastructure/` se enlaza en el `ServiceProvider` del dominio
+
+#### Scenario: Regla que usa un Dto y lanza una excepción
+- **GIVEN** una clase de `Usuarios/Rules/` que importa una clase de `Usuarios/Dto/` y una de `Usuarios/Exceptions/`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test no reporta esas dependencias
+
+#### Scenario: Núcleo que importa un caso de uso
+- **GIVEN** una clase de `Usuarios/Rules/` que importa una clase de `Usuarios/Features/VerUsuario/`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la dependencia prohibida
+
+#### Scenario: Núcleo que importa HTTP
+- **GIVEN** una clase de `Usuarios/Interfaces/` que importa `Illuminate\Http\Request`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la dependencia prohibida
 
 #### Scenario: Caso de uso que importa a otro
 - **GIVEN** una clase de `Features/VerUsuario/` que importa una clase de `Features/ListarUsuarios/`
@@ -48,10 +76,10 @@ Las dependencias SHALL ir hacia adentro: `Features` puede usar `Domain`, `Contra
 - **THEN** el test falla nombrando el archivo y la dependencia prohibida
 
 ### Requirement: Dependencias entre dominios
-Un dominio MUST depender de otro solo a través de la carpeta `Contracts/` del otro. MUST NOT importar sus `Features`, `Domain` ni `Infrastructure`. `app/Shared` MUST NOT depender de ningún dominio.
+Un dominio MUST depender de otro solo a través de la carpeta `Contracts/` del otro. MUST NOT importar sus `Features`, su núcleo (`Rules`, `Exceptions`, `Dto`, `Interfaces`) ni su `Infrastructure`. `app/Shared` MUST NOT depender de ningún dominio.
 
 #### Scenario: Dominio que usa el modelo de otro
-- **GIVEN** una clase de `Domains/Aplicaciones` que importa una clase de `Domains/Usuarios/Domain`
+- **GIVEN** una clase de `Domains/Aplicaciones` que importa una clase de `Domains/Usuarios/Rules`
 - **WHEN** se ejecuta el test de arquitectura
 - **THEN** el test falla nombrando el archivo y la dependencia prohibida
 
@@ -60,11 +88,11 @@ Un dominio MUST depender de otro solo a través de la carpeta `Contracts/` del o
 - **THEN** ninguna apunta a `App\Domains`
 
 ### Requirement: Puntos de entrada fuera de los dominios
-Los comandos de Artisan (`app/Console`) y la configuración de la aplicación SHALL poder usar `Shared` y el `Domain`, `Contracts` y `Features` de cualquier dominio, porque coordinan varios dominios. MUST NOT importar `Infrastructure` de ningún dominio.
+Los comandos de Artisan (`app/Console`) y la configuración de la aplicación SHALL poder usar `Shared` y el núcleo, `Contracts` y `Features` de cualquier dominio, porque coordinan varios dominios. MUST NOT importar `Infrastructure` de ningún dominio.
 
 #### Scenario: Comando de instalación
 - **WHEN** se revisan las importaciones de `iam:install`
-- **THEN** usa la auditoría y el RUT de `Shared`, la clave temporal de `Usuarios/Domain` y la creación de clientes de `Clientes/Domain`, y ninguna clase de `Infrastructure`
+- **THEN** usa la auditoría y el RUT de `Shared`, la clave temporal de `Usuarios/Rules` y la creación de clientes de `Clientes/Rules` y `Clientes/Interfaces`, y ninguna clase de `Infrastructure`
 
 ### Requirement: Núcleo compartido mínimo
 `app/Shared` SHALL contener solo lo que usan dos o más dominios o los puntos de entrada: la página de resultados y la respuesta paginada `{data, meta: {total, pagina, por_pagina}}`, la regla y normalización de RUT, y el puerto de auditoría con su implementación. La auditoría MUST mantener el comportamiento de la spec `auditoria`.
@@ -82,10 +110,10 @@ Cada clase SHALL decir su rol en el nombre: el negocio en español y el rol téc
 
 #### Scenario: Clases de Usuarios
 - **WHEN** se revisa `app/Domains/Usuarios`
-- **THEN** encuentra `IUsuarioQueryRepository` en `Domain/Interfaces/`, `UsuarioResumenDto` y `UsuarioDetalleDto` en `Domain/Dto/`, `UsuarioNoEncontradoException` en `Domain/`, `UsuarioQueryRepository` en `Infrastructure/` e `IDirectorioUsuariosService` con `PersonaBasicaDto` en `Contracts/`
+- **THEN** encuentra `IUsuarioQueryRepository` en `Interfaces/`, `UsuarioResumenDto` y `UsuarioDetalleDto` en `Dto/`, `UsuarioNoEncontradoException` en `Exceptions/`, `UsuarioQueryRepository` en `Infrastructure/` e `IDirectorioUsuariosService` con `PersonaBasicaDto` en `Contracts/`
 
 ### Requirement: Lecturas por repositorios de consulta
-Los casos de uso de solo lectura SHALL obtener sus datos de un repositorio de consulta (`I<Entidad>QueryRepository` en `Domain/Interfaces/`) que devuelve DTO de solo lectura con las columnas que la respuesta necesita, sin pasar por las entidades de escritura. Las consultas MUST NOT cargar columnas de credenciales (`password`, `remember_token`, `entra_oid`) cuando la respuesta no las usa, y las interfaces MUST NOT exponer tipos de paginación de Laravel.
+Los casos de uso de solo lectura SHALL obtener sus datos de un repositorio de consulta (`I<Entidad>QueryRepository` en `Interfaces/`) que devuelve DTO de solo lectura con las columnas que la respuesta necesita, sin pasar por las entidades de escritura. Las consultas MUST NOT cargar columnas de credenciales (`password`, `remember_token`, `entra_oid`) cuando la respuesta no las usa, y las interfaces MUST NOT exponer tipos de paginación de Laravel.
 
 #### Scenario: Listado de usuarios sin credenciales en memoria
 - **WHEN** se pide `GET /api/iam/v1/usuarios`
@@ -96,7 +124,7 @@ Los casos de uso de solo lectura SHALL obtener sus datos de un repositorio de co
 - **THEN** su listado devuelve la página de resultados de `Shared`, no un `LengthAwarePaginator`
 
 ### Requirement: Verificación automática de la arquitectura
-Un test de arquitectura SHALL recorrer `app/` y fallar, nombrando el archivo y la importación, ante cualquier dependencia que prohíben los requisitos de dependencias de este spec. MUST correr en la suite normal (`php artisan test`) y no requerir dependencias nuevas ni base de datos.
+Un test de arquitectura SHALL recorrer `app/` y fallar, nombrando el archivo y la importación, ante cualquier dependencia que prohíben los requisitos de dependencias de este spec y ante un handler (`…QueryHandler` o `…CommandHandler`) que importe clases HTTP (`Illuminate\Http`). MUST correr en la suite normal (`php artisan test`) y no requerir dependencias nuevas ni base de datos.
 
 #### Scenario: Código que respeta las reglas
 - **WHEN** se ejecuta `php artisan test` sobre el código de este cambio
@@ -106,6 +134,16 @@ Un test de arquitectura SHALL recorrer `app/` y fallar, nombrando el archivo y l
 - **GIVEN** un comando de `app/Console` que importa una clase de `Domains/*/Infrastructure`
 - **WHEN** se ejecuta el test de arquitectura
 - **THEN** el test falla nombrando el comando y la clase importada
+
+#### Scenario: Handler que importa HTTP
+- **GIVEN** un `ListarUsuariosQueryHandler` o un `CrearUsuarioCommandHandler` que importa `Illuminate\Http\Request`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el handler y la clase importada
+
+#### Scenario: Endpoint que usa HTTP
+- **GIVEN** un `CrearUsuarioEndpoint` que importa `Illuminate\Http\JsonResponse`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test no reporta esa dependencia
 
 ### Requirement: Generador de casos de uso
 `php artisan iam:make-feature <Dominio> <CasoDeUso>` SHALL crear `app/Domains/<Dominio>/Features/<CasoDeUso>/` con el endpoint, el request, el handler (`<CasoDeUso>QueryHandler`, o `<CasoDeUso>CommandHandler` con `--command`) y el resource, más un test de feature en `tests/Feature/<Dominio>/<CasoDeUso>Test.php`, y mostrar la línea de ruta que hay que agregar. MUST negarse a sobrescribir archivos existentes y a aceptar nombres que no sean PascalCase.

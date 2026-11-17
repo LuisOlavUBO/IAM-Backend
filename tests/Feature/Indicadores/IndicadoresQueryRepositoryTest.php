@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Indicadores;
 
-use App\Domains\Indicadores\Domain\Dto\ClienteSenaladoDto;
-use App\Domains\Indicadores\Domain\Dto\PersonaInactivaDto;
-use App\Domains\Indicadores\Domain\Dto\TokensDeClienteDto;
-use App\Domains\Indicadores\Domain\Interfaces\IIndicadoresQueryRepository;
+use App\Domains\Indicadores\Dto\ClienteSenaladoDto;
+use App\Domains\Indicadores\Dto\PersonaInactivaDto;
+use App\Domains\Indicadores\Dto\TokensDeClienteDto;
+use App\Domains\Indicadores\Interfaces\IIndicadoresQueryRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

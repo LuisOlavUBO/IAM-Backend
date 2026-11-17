@@ -2,9 +2,9 @@
 
 namespace App\Domains\Aplicaciones\Features\VerAplicacion;
 
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionDetalleDto;
-use App\Domains\Aplicaciones\Domain\Dto\PermisoDto;
-use App\Domains\Aplicaciones\Domain\Dto\RolDto;
+use App\Domains\Aplicaciones\Dto\AplicacionDetalleDto;
+use App\Domains\Aplicaciones\Dto\PermisoDto;
+use App\Domains\Aplicaciones\Dto\RolDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

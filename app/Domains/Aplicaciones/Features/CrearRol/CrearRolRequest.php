@@ -2,7 +2,7 @@
 
 namespace App\Domains\Aplicaciones\Features\CrearRol;
 
-use App\Domains\Aplicaciones\Domain\ReglasDeCatalogo;
+use App\Domains\Aplicaciones\Rules\ReglasDeCatalogo;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

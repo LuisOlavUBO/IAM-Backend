@@ -198,9 +198,10 @@ app/Domains/Usuarios/
 +-- Features/                     QUÉ HACE: un caso de uso por carpeta
 |   +-- ListarUsuarios/           ListarUsuariosEndpoint, Request, QueryHandler, Resource
 |   +-- VerUsuario/               VerUsuarioEndpoint, QueryHandler, Resource
-+-- Domain/                       EL NÚCLEO, sin HTTP ni SQL: ClaveTemporal, UsuarioNoEncontradoException
-|   +-- Dto/                      FiltroUsuariosDto, UsuarioResumenDto, UsuarioDetalleDto, RolAsignadoDto
-|   +-- Interfaces/               IUsuarioQueryRepository
++-- Rules/                      ┐ EL NÚCLEO, sin HTTP ni SQL: ClaveTemporal, ReglasDeRoles, ReglasDePersonas
++-- Exceptions/                 │ UsuarioNoEncontradoException, UltimoAdministradorException…
++-- Dto/                        │ FiltroUsuariosDto, UsuarioResumenDto, UsuarioDetalleDto, RolAsignadoDto…
++-- Interfaces/                 ┘ IUsuarioQueryRepository, IPersonasRepository, IRevocadorDeSesiones…
 +-- Infrastructure/               CÓMO: UsuarioQueryRepository, DirectorioUsuariosService (SQL)
 +-- Contracts/                    LO PÚBLICO para otros dominios: IDirectorioUsuariosService, PersonaBasicaDto
 ```
@@ -216,12 +217,19 @@ routes/v1.php → VerUsuarioEndpoint → VerUsuarioQueryHandler → IUsuarioQuer
   el **handler** es el caso de uso (recibe datos tipados y solo las interfaces que usa) y el **resource** arma el JSON
   con una lista blanca de campos.
 - CQRS lite: un `QueryHandler` lee por un `I<Entidad>QueryRepository` que devuelve DTO; un `CommandHandler` escribe
-  con la entidad de `Domain/`, su `I<Entidad>Repository`, la transacción y `IAuditor`. Sin bus ni eventos.
+  con su `I<Entidad>Repository`, las reglas de `Rules/`, las excepciones de `Exceptions/`, la transacción e `IAuditor`.
+  Sin bus ni eventos, y sin entidades: Eloquent es Active Record, así que las lecturas van a DTO y las escrituras por
+  repositorios más reglas puras.
+- El núcleo son cuatro carpetas que funcionan como una sola capa: `Rules/`, `Exceptions/`, `Dto/` e `Interfaces/`.
+  ¿Lo usa otro dominio? Va en `Contracts/`. ¿Solo este? En `Dto/` o `Interfaces/`. ¿Solo un caso de uso? En su carpeta
+  de `Features/`.
 - Nombres al estilo .NET: `I…` interfaz, `…Dto`, `…Exception`, `…QueryRepository` / `…Repository`, `…Service`.
-- Las capas `Domain`, `Infrastructure` y `Contracts` se crean solo cuando tienen algo (Acceso no tiene
-  `Domain/`; Auditoria no tiene `Contracts/`); las subcarpetas por tipo, cuando una carpeta pasa de unos diez archivos.
+- Las carpetas del núcleo, `Infrastructure` y `Contracts` se crean solo cuando tienen algo (Acceso no tiene núcleo;
+  Auditoria solo tiene `Dto/` e `Interfaces/` y no tiene `Contracts/`); las subcarpetas, cuando una carpeta pasa de
+  unos diez archivos.
 - Entre dominios solo se usa `Contracts/`; `Shared` no conoce dominios; un caso de uso no importa otro ni
-  `Infrastructure`. `tests/Unit/ArquitecturaTest.php` lo verifica en cada `php artisan test`.
+  `Infrastructure`; un handler no importa `Illuminate\Http`; una carpeta de dominio fuera de esta estructura es un
+  error. `tests/Unit/ArquitecturaTest.php` lo verifica en cada `php artisan test`.
 - Un caso de uso nuevo se crea con:
 
   ```bash

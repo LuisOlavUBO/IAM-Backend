@@ -2,10 +2,10 @@
 
 namespace App\Domains\Aplicaciones\Features\DarDeBajaAplicacion;
 
-use App\Domains\Aplicaciones\Domain\AplicacionNoEncontradaException;
-use App\Domains\Aplicaciones\Domain\BajaSinConfirmarException;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
-use App\Domains\Aplicaciones\Domain\ReglasDeCatalogo;
+use App\Domains\Aplicaciones\Exceptions\AplicacionNoEncontradaException;
+use App\Domains\Aplicaciones\Exceptions\BajaSinConfirmarException;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
+use App\Domains\Aplicaciones\Rules\ReglasDeCatalogo;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use UBO\Common\Problems\Exceptions\DomainProblem;

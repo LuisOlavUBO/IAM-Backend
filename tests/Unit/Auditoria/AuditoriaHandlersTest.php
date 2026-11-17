@@ -3,11 +3,11 @@
 namespace Tests\Unit\Auditoria;
 
 use App\Domains\Aplicaciones\Contracts\IDirectorioAplicacionesService;
-use App\Domains\Auditoria\Domain\Dto\ActorDto;
-use App\Domains\Auditoria\Domain\Dto\EntradaAuditoriaDto;
-use App\Domains\Auditoria\Domain\Dto\FiltroAuditoriaDto;
-use App\Domains\Auditoria\Domain\Interfaces\IAuditoriaQueryRepository;
+use App\Domains\Auditoria\Dto\ActorDto;
+use App\Domains\Auditoria\Dto\EntradaAuditoriaDto;
+use App\Domains\Auditoria\Dto\FiltroAuditoriaDto;
 use App\Domains\Auditoria\Features\ListarAuditoria\ListarAuditoriaQueryHandler;
+use App\Domains\Auditoria\Interfaces\IAuditoriaQueryRepository;
 use App\Domains\Clientes\Contracts\IDirectorioClientesService;
 use App\Domains\Usuarios\Contracts\IDirectorioUsuariosService;
 use App\Domains\Usuarios\Contracts\PersonaBasicaDto;

@@ -2,11 +2,11 @@
 
 namespace App\Domains\Aplicaciones\Features\EditarRol;
 
-use App\Domains\Aplicaciones\Domain\AplicacionNoEncontradaException;
-use App\Domains\Aplicaciones\Domain\Dto\RolParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
-use App\Domains\Aplicaciones\Domain\ReglasDeCatalogo;
-use App\Domains\Aplicaciones\Domain\RolNoEncontradoException;
+use App\Domains\Aplicaciones\Dto\RolParaEscribirDto;
+use App\Domains\Aplicaciones\Exceptions\AplicacionNoEncontradaException;
+use App\Domains\Aplicaciones\Exceptions\RolNoEncontradoException;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
+use App\Domains\Aplicaciones\Rules\ReglasDeCatalogo;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use UBO\Common\Problems\Exceptions\DomainProblem;

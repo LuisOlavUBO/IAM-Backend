@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Clientes;
 
-use App\Domains\Clientes\Domain\SecretoDeCliente;
+use App\Domains\Clientes\Rules\SecretoDeCliente;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 

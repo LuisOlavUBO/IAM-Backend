@@ -2,13 +2,13 @@
 
 namespace App\Domains\Usuarios\Features\RevocarSesiones;
 
-use App\Domains\Usuarios\Domain\AccionSobreSiMismoException;
-use App\Domains\Usuarios\Domain\Dto\QuienActuaDto;
-use App\Domains\Usuarios\Domain\Interfaces\IRevocadorDeSesiones;
-use App\Domains\Usuarios\Domain\Interfaces\IRolesDeUsuarioRepository;
-use App\Domains\Usuarios\Domain\ReglasDeRoles;
-use App\Domains\Usuarios\Domain\RevocacionFallidaException;
-use App\Domains\Usuarios\Domain\UsuarioNoEncontradoException;
+use App\Domains\Usuarios\Dto\QuienActuaDto;
+use App\Domains\Usuarios\Exceptions\AccionSobreSiMismoException;
+use App\Domains\Usuarios\Exceptions\RevocacionFallidaException;
+use App\Domains\Usuarios\Exceptions\UsuarioNoEncontradoException;
+use App\Domains\Usuarios\Interfaces\IRevocadorDeSesiones;
+use App\Domains\Usuarios\Interfaces\IRolesDeUsuarioRepository;
+use App\Domains\Usuarios\Rules\ReglasDeRoles;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

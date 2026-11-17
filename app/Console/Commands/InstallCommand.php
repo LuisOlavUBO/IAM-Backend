@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
-use App\Domains\Clientes\Domain\NuevoCliente;
-use App\Domains\Clientes\Domain\Redireccion;
-use App\Domains\Usuarios\Domain\ClaveTemporal;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Rules\NuevoCliente;
+use App\Domains\Clientes\Rules\Redireccion;
+use App\Domains\Usuarios\Rules\ClaveTemporal;
 use App\Shared\Auditoria\IAuditor;
 use App\Shared\Rut\Rut;
 use Illuminate\Console\Attributes\Description;

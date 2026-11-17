@@ -2,8 +2,8 @@
 
 namespace App\Domains\Indicadores;
 
-use App\Domains\Indicadores\Domain\Interfaces\IIndicadoresQueryRepository;
 use App\Domains\Indicadores\Infrastructure\IndicadoresQueryRepository;
+use App\Domains\Indicadores\Interfaces\IIndicadoresQueryRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**

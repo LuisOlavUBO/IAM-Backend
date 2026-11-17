@@ -2,8 +2,8 @@
 
 namespace App\Domains\Auditoria;
 
-use App\Domains\Auditoria\Domain\Interfaces\IAuditoriaQueryRepository;
 use App\Domains\Auditoria\Infrastructure\AuditoriaQueryRepository;
+use App\Domains\Auditoria\Interfaces\IAuditoriaQueryRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**

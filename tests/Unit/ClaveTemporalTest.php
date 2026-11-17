@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Domains\Usuarios\Domain\ClaveTemporal;
+use App\Domains\Usuarios\Rules\ClaveTemporal;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 

@@ -2,10 +2,10 @@
 
 namespace App\Domains\Auditoria\Infrastructure;
 
-use App\Domains\Auditoria\Domain\Dto\ActorDto;
-use App\Domains\Auditoria\Domain\Dto\EntradaAuditoriaDto;
-use App\Domains\Auditoria\Domain\Dto\FiltroAuditoriaDto;
-use App\Domains\Auditoria\Domain\Interfaces\IAuditoriaQueryRepository;
+use App\Domains\Auditoria\Dto\ActorDto;
+use App\Domains\Auditoria\Dto\EntradaAuditoriaDto;
+use App\Domains\Auditoria\Dto\FiltroAuditoriaDto;
+use App\Domains\Auditoria\Interfaces\IAuditoriaQueryRepository;
 use App\Shared\Paginacion\Pagina;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;

@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Usuarios;
 
-use App\Domains\Usuarios\Domain\Dto\FiltroUsuariosDto;
-use App\Domains\Usuarios\Domain\Interfaces\IUsuarioQueryRepository;
+use App\Domains\Usuarios\Dto\FiltroUsuariosDto;
 use App\Domains\Usuarios\Infrastructure\UsuarioQueryRepository;
+use App\Domains\Usuarios\Interfaces\IUsuarioQueryRepository;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

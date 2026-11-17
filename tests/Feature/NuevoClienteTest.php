@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Domains\Clientes\Domain\Dto\NuevoClienteDto;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
-use App\Domains\Clientes\Domain\NuevoCliente;
+use App\Domains\Clientes\Dto\NuevoClienteDto;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Rules\NuevoCliente;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

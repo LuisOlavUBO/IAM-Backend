@@ -2,11 +2,11 @@
 
 namespace App\Domains\Aplicaciones\Features\EditarPermiso;
 
-use App\Domains\Aplicaciones\Domain\AplicacionNoEncontradaException;
-use App\Domains\Aplicaciones\Domain\Dto\PermisoParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
-use App\Domains\Aplicaciones\Domain\PermisoNoEncontradoException;
-use App\Domains\Aplicaciones\Domain\ReglasDeCatalogo;
+use App\Domains\Aplicaciones\Dto\PermisoParaEscribirDto;
+use App\Domains\Aplicaciones\Exceptions\AplicacionNoEncontradaException;
+use App\Domains\Aplicaciones\Exceptions\PermisoNoEncontradoException;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
+use App\Domains\Aplicaciones\Rules\ReglasDeCatalogo;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use UBO\Common\Problems\Exceptions\DomainProblem;

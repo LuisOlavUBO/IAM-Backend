@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Usuarios;
 
-use App\Domains\Usuarios\Domain\Dto\QuienActuaDto;
-use App\Domains\Usuarios\Domain\Dto\RolDeAplicacionDto;
-use App\Domains\Usuarios\Domain\EscalamientoDePrivilegiosException;
-use App\Domains\Usuarios\Domain\ReglasDePersonas;
-use App\Domains\Usuarios\Domain\UltimoAdministradorException;
+use App\Domains\Usuarios\Dto\QuienActuaDto;
+use App\Domains\Usuarios\Dto\RolDeAplicacionDto;
+use App\Domains\Usuarios\Exceptions\EscalamientoDePrivilegiosException;
+use App\Domains\Usuarios\Exceptions\UltimoAdministradorException;
+use App\Domains\Usuarios\Rules\ReglasDePersonas;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

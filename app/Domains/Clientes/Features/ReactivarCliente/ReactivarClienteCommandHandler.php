@@ -2,8 +2,8 @@
 
 namespace App\Domains\Clientes\Features\ReactivarCliente;
 
-use App\Domains\Clientes\Domain\ClienteNoEncontradoException;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Exceptions\ClienteNoEncontradoException;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

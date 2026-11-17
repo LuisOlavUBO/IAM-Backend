@@ -2,11 +2,11 @@
 
 namespace App\Domains\Aplicaciones\Infrastructure;
 
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Dto\ImpactoDto;
-use App\Domains\Aplicaciones\Domain\Dto\PermisoParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Dto\RolParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
+use App\Domains\Aplicaciones\Dto\AplicacionParaEscribirDto;
+use App\Domains\Aplicaciones\Dto\ImpactoDto;
+use App\Domains\Aplicaciones\Dto\PermisoParaEscribirDto;
+use App\Domains\Aplicaciones\Dto\RolParaEscribirDto;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 

@@ -2,7 +2,7 @@
 
 namespace App\Domains\Usuarios\Features\CrearUsuario;
 
-use App\Domains\Usuarios\Domain\Dto\NuevaPersonaDto;
+use App\Domains\Usuarios\Dto\NuevaPersonaDto;
 use App\Shared\Rut\Rut;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Usuarios;
 
-use App\Domains\Usuarios\Domain\Interfaces\IRevocadorDeSesiones;
+use App\Domains\Usuarios\Interfaces\IRevocadorDeSesiones;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\IniciaSesionEnIam;

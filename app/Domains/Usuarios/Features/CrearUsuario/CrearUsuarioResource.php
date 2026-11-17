@@ -2,7 +2,6 @@
 
 namespace App\Domains\Usuarios\Features\CrearUsuario;
 
-use App\Domains\Usuarios\Domain\Dto\PersonaCreadaDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

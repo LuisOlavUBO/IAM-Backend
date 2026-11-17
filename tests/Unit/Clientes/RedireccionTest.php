@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Clientes;
 
-use App\Domains\Clientes\Domain\Redireccion;
+use App\Domains\Clientes\Rules\Redireccion;
 use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;

@@ -2,7 +2,7 @@
 
 namespace App\Domains\Clientes\Features\ListarClientes;
 
-use App\Domains\Clientes\Domain\Dto\ClienteResumenDto;
+use App\Domains\Clientes\Dto\ClienteResumenDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

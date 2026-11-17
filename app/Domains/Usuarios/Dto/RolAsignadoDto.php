@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Domains\Usuarios\Dto;
+
+/**
+ * A role a person has, with its application. A read object of Usuarios, so this domain does not
+ * depend on the models of Aplicaciones.
+ */
+final readonly class RolAsignadoDto
+{
+    public function __construct(
+        public string $aplicacion,
+        public ?string $aplicacionDescripcion,
+        public string $rol,
+        public ?string $rolDescripcion,
+    ) {}
+}

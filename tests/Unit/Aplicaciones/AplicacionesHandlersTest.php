@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\Aplicaciones;
 
-use App\Domains\Aplicaciones\Domain\AplicacionNoEncontradaException;
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionDetalleDto;
-use App\Domains\Aplicaciones\Domain\Dto\FiltroAplicacionesDto;
-use App\Domains\Aplicaciones\Domain\Interfaces\IAplicacionQueryRepository;
+use App\Domains\Aplicaciones\Dto\AplicacionDetalleDto;
+use App\Domains\Aplicaciones\Dto\FiltroAplicacionesDto;
+use App\Domains\Aplicaciones\Exceptions\AplicacionNoEncontradaException;
 use App\Domains\Aplicaciones\Features\ListarAplicaciones\ListarAplicacionesQueryHandler;
 use App\Domains\Aplicaciones\Features\VerAplicacion\VerAplicacionQueryHandler;
+use App\Domains\Aplicaciones\Interfaces\IAplicacionQueryRepository;
 use App\Shared\Paginacion\Pagina;
 use PHPUnit\Framework\TestCase;
 

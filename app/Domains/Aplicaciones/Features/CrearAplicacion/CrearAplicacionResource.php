@@ -2,7 +2,7 @@
 
 namespace App\Domains\Aplicaciones\Features\CrearAplicacion;
 
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionParaEscribirDto;
+use App\Domains\Aplicaciones\Dto\AplicacionParaEscribirDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

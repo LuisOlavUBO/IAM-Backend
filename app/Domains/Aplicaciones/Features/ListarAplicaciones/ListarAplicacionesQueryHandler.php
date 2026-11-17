@@ -2,9 +2,9 @@
 
 namespace App\Domains\Aplicaciones\Features\ListarAplicaciones;
 
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionResumenDto;
-use App\Domains\Aplicaciones\Domain\Dto\FiltroAplicacionesDto;
-use App\Domains\Aplicaciones\Domain\Interfaces\IAplicacionQueryRepository;
+use App\Domains\Aplicaciones\Dto\AplicacionResumenDto;
+use App\Domains\Aplicaciones\Dto\FiltroAplicacionesDto;
+use App\Domains\Aplicaciones\Interfaces\IAplicacionQueryRepository;
 use App\Shared\Paginacion\Pagina;
 
 /**

@@ -2,8 +2,8 @@
 
 namespace App\Domains\Aplicaciones\Features\ReactivarAplicacion;
 
-use App\Domains\Aplicaciones\Domain\AplicacionNoEncontradaException;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
+use App\Domains\Aplicaciones\Exceptions\AplicacionNoEncontradaException;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 

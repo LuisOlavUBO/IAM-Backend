@@ -2,12 +2,11 @@
 
 namespace App\Domains\Usuarios\Features\CrearUsuario;
 
-use App\Domains\Usuarios\Domain\ClaveTemporal;
-use App\Domains\Usuarios\Domain\CorreoEnUsoException;
-use App\Domains\Usuarios\Domain\Dto\NuevaPersonaDto;
-use App\Domains\Usuarios\Domain\Dto\PersonaCreadaDto;
-use App\Domains\Usuarios\Domain\Interfaces\IPersonasRepository;
-use App\Domains\Usuarios\Domain\RutEnUsoException;
+use App\Domains\Usuarios\Dto\NuevaPersonaDto;
+use App\Domains\Usuarios\Exceptions\CorreoEnUsoException;
+use App\Domains\Usuarios\Exceptions\RutEnUsoException;
+use App\Domains\Usuarios\Interfaces\IPersonasRepository;
+use App\Domains\Usuarios\Rules\ClaveTemporal;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

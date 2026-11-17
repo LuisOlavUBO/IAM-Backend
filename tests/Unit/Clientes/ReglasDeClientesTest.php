@@ -2,14 +2,14 @@
 
 namespace Tests\Unit\Clientes;
 
-use App\Domains\Clientes\Domain\ClienteDeIamAdminException;
-use App\Domains\Clientes\Domain\ClienteSinRedireccionesException;
-use App\Domains\Clientes\Domain\ClienteSinRolesException;
-use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
-use App\Domains\Clientes\Domain\Dto\RolDeAplicacionDto;
-use App\Domains\Clientes\Domain\NuevoCliente;
-use App\Domains\Clientes\Domain\ReglasDeClientes;
-use App\Domains\Clientes\Domain\RolDeIamAdminException;
+use App\Domains\Clientes\Dto\ClienteParaEscribirDto;
+use App\Domains\Clientes\Dto\RolDeAplicacionDto;
+use App\Domains\Clientes\Exceptions\ClienteDeIamAdminException;
+use App\Domains\Clientes\Exceptions\ClienteSinRedireccionesException;
+use App\Domains\Clientes\Exceptions\ClienteSinRolesException;
+use App\Domains\Clientes\Exceptions\RolDeIamAdminException;
+use App\Domains\Clientes\Rules\NuevoCliente;
+use App\Domains\Clientes\Rules\ReglasDeClientes;
 use PHPUnit\Framework\TestCase;
 
 /**
