@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Dto\ClienteParaEscribirDto;
 use App\Domains\Clientes\Features\RotarSecreto\RotarSecretoCommandHandler;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Clientes;
 
-use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
-use App\Domains\Clientes\Domain\Dto\RolDeAplicacionDto;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Dto\ClienteParaEscribirDto;
+use App\Domains\Clientes\Dto\RolDeAplicacionDto;
 use App\Domains\Clientes\Infrastructure\ClientesRepository;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;

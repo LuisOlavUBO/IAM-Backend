@@ -2,7 +2,7 @@
 
 namespace App\Domains\Usuarios\Features\ListarUsuarios;
 
-use App\Domains\Usuarios\Domain\Dto\FiltroUsuariosDto;
+use App\Domains\Usuarios\Dto\FiltroUsuariosDto;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

@@ -152,6 +152,24 @@ class VerIndicadoresTest extends TestCase
         Cache::store('file')->flush();
     }
 
+    /**
+     * An entry left by the previous version (its Dto under the old namespace) is not read: the key carries
+     * the cache version (design D6 of nucleo-explicito).
+     */
+    public function test_an_entry_of_the_previous_version_is_not_read(): void
+    {
+        $clase = 'App\Domains\Indicadores\Domain\Dto\PersonasDto';
+        $viejo = unserialize('O:'.strlen($clase).':"'.$clase.'":0:{}', ['allowed_classes' => false]);
+        Cache::put('indicadores.personas', ['calculado_en' => $this->ahora->subMinute()->toIso8601String(), 'datos' => $viejo], 300);
+        $this->persona('Olvidada', $this->ahora->subDays(100));
+        $this->conPermisos(['iam:usuarios.leer']);
+
+        $this->getJson('/api/iam/v1/indicadores')
+            ->assertOk()
+            ->assertJsonPath('data.personas.inactivas_30', 1)
+            ->assertJsonPath('meta.calculado_en', $this->ahora->toIso8601String());
+    }
+
     public function test_a_second_request_within_5_minutes_uses_the_cache(): void
     {
         $this->persona('Olvidada', $this->ahora->subDays(100));

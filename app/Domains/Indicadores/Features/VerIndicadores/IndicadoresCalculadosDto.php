@@ -2,12 +2,12 @@
 
 namespace App\Domains\Indicadores\Features\VerIndicadores;
 
-use App\Domains\Indicadores\Domain\Dto\AuditoriaDto;
-use App\Domains\Indicadores\Domain\Dto\ClientesDto;
-use App\Domains\Indicadores\Domain\Dto\EntornoDto;
-use App\Domains\Indicadores\Domain\Dto\PersonasDto;
-use App\Domains\Indicadores\Domain\Dto\PrivilegiosDto;
-use App\Domains\Indicadores\Domain\Dto\SenalesDto;
+use App\Domains\Indicadores\Dto\AuditoriaDto;
+use App\Domains\Indicadores\Dto\ClientesDto;
+use App\Domains\Indicadores\Dto\EntornoDto;
+use App\Domains\Indicadores\Dto\PersonasDto;
+use App\Domains\Indicadores\Dto\PrivilegiosDto;
+use App\Domains\Indicadores\Dto\SenalesDto;
 use Carbon\CarbonImmutable;
 
 /**

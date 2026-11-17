@@ -3,15 +3,15 @@
 namespace App\Domains\Usuarios;
 
 use App\Domains\Usuarios\Contracts\IDirectorioUsuariosService;
-use App\Domains\Usuarios\Domain\Interfaces\IPersonasRepository;
-use App\Domains\Usuarios\Domain\Interfaces\IRevocadorDeSesiones;
-use App\Domains\Usuarios\Domain\Interfaces\IRolesDeUsuarioRepository;
-use App\Domains\Usuarios\Domain\Interfaces\IUsuarioQueryRepository;
 use App\Domains\Usuarios\Infrastructure\ApiAuthRevocadorDeSesiones;
 use App\Domains\Usuarios\Infrastructure\DirectorioUsuariosService;
 use App\Domains\Usuarios\Infrastructure\PersonasRepository;
 use App\Domains\Usuarios\Infrastructure\RolesDeUsuarioRepository;
 use App\Domains\Usuarios\Infrastructure\UsuarioQueryRepository;
+use App\Domains\Usuarios\Interfaces\IPersonasRepository;
+use App\Domains\Usuarios\Interfaces\IRevocadorDeSesiones;
+use App\Domains\Usuarios\Interfaces\IRolesDeUsuarioRepository;
+use App\Domains\Usuarios\Interfaces\IUsuarioQueryRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**

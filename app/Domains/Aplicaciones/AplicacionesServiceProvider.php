@@ -3,11 +3,11 @@
 namespace App\Domains\Aplicaciones;
 
 use App\Domains\Aplicaciones\Contracts\IDirectorioAplicacionesService;
-use App\Domains\Aplicaciones\Domain\Interfaces\IAplicacionQueryRepository;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
 use App\Domains\Aplicaciones\Infrastructure\AplicacionQueryRepository;
 use App\Domains\Aplicaciones\Infrastructure\CatalogoRepository;
 use App\Domains\Aplicaciones\Infrastructure\DirectorioAplicacionesService;
+use App\Domains\Aplicaciones\Interfaces\IAplicacionQueryRepository;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**

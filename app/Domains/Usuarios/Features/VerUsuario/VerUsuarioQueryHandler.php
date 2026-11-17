@@ -2,9 +2,9 @@
 
 namespace App\Domains\Usuarios\Features\VerUsuario;
 
-use App\Domains\Usuarios\Domain\Dto\UsuarioDetalleDto;
-use App\Domains\Usuarios\Domain\Interfaces\IUsuarioQueryRepository;
-use App\Domains\Usuarios\Domain\UsuarioNoEncontradoException;
+use App\Domains\Usuarios\Dto\UsuarioDetalleDto;
+use App\Domains\Usuarios\Exceptions\UsuarioNoEncontradoException;
+use App\Domains\Usuarios\Interfaces\IUsuarioQueryRepository;
 use Illuminate\Support\Str;
 
 /**

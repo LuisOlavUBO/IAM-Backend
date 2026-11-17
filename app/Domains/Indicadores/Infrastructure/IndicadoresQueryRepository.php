@@ -2,19 +2,19 @@
 
 namespace App\Domains\Indicadores\Infrastructure;
 
-use App\Domains\Indicadores\Domain\Dto\AuditoriaDto;
-use App\Domains\Indicadores\Domain\Dto\ClientesDto;
-use App\Domains\Indicadores\Domain\Dto\ClienteSenaladoDto;
-use App\Domains\Indicadores\Domain\Dto\EntornoDto;
-use App\Domains\Indicadores\Domain\Dto\IngresosDelDiaDto;
-use App\Domains\Indicadores\Domain\Dto\PersonaConVariasIpsDto;
-use App\Domains\Indicadores\Domain\Dto\PersonaInactivaDto;
-use App\Domains\Indicadores\Domain\Dto\PersonasDto;
-use App\Domains\Indicadores\Domain\Dto\PrivilegiosDto;
-use App\Domains\Indicadores\Domain\Dto\RolConPersonasDto;
-use App\Domains\Indicadores\Domain\Dto\SenalesDto;
-use App\Domains\Indicadores\Domain\Dto\TokensDeClienteDto;
-use App\Domains\Indicadores\Domain\Interfaces\IIndicadoresQueryRepository;
+use App\Domains\Indicadores\Dto\AuditoriaDto;
+use App\Domains\Indicadores\Dto\ClientesDto;
+use App\Domains\Indicadores\Dto\ClienteSenaladoDto;
+use App\Domains\Indicadores\Dto\EntornoDto;
+use App\Domains\Indicadores\Dto\IngresosDelDiaDto;
+use App\Domains\Indicadores\Dto\PersonaConVariasIpsDto;
+use App\Domains\Indicadores\Dto\PersonaInactivaDto;
+use App\Domains\Indicadores\Dto\PersonasDto;
+use App\Domains\Indicadores\Dto\PrivilegiosDto;
+use App\Domains\Indicadores\Dto\RolConPersonasDto;
+use App\Domains\Indicadores\Dto\SenalesDto;
+use App\Domains\Indicadores\Dto\TokensDeClienteDto;
+use App\Domains\Indicadores\Interfaces\IIndicadoresQueryRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;

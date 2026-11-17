@@ -2,7 +2,7 @@
 
 namespace App\Domains\Usuarios\Features\ListarUsuarios;
 
-use App\Domains\Usuarios\Domain\Dto\UsuarioResumenDto;
+use App\Domains\Usuarios\Dto\UsuarioResumenDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

@@ -2,7 +2,7 @@
 
 namespace App\Domains\Usuarios\Features\ReiniciarClave;
 
-use App\Domains\Usuarios\Domain\ClaveTemporal;
+use App\Domains\Usuarios\Rules\ClaveTemporal;
 
 /**
  * The new temporary password, shown once and never logged or audited, and whether API-Auth closed the

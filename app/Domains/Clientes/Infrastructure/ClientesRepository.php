@@ -2,11 +2,11 @@
 
 namespace App\Domains\Clientes\Infrastructure;
 
-use App\Domains\Clientes\Domain\Dto\ClienteParaEscribirDto;
-use App\Domains\Clientes\Domain\Dto\NuevoClienteDto;
-use App\Domains\Clientes\Domain\Dto\RolDeAplicacionDto;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
-use App\Domains\Clientes\Domain\NuevoCliente;
+use App\Domains\Clientes\Dto\ClienteParaEscribirDto;
+use App\Domains\Clientes\Dto\NuevoClienteDto;
+use App\Domains\Clientes\Dto\RolDeAplicacionDto;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Rules\NuevoCliente;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

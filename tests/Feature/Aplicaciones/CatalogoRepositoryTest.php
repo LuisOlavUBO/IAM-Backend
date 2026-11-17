@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Aplicaciones;
 
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Dto\PermisoParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Dto\RolParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
+use App\Domains\Aplicaciones\Dto\AplicacionParaEscribirDto;
+use App\Domains\Aplicaciones\Dto\PermisoParaEscribirDto;
+use App\Domains\Aplicaciones\Dto\RolParaEscribirDto;
 use App\Domains\Aplicaciones\Infrastructure\CatalogoRepository;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;

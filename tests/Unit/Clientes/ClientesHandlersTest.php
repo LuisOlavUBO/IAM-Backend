@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\Clientes;
 
-use App\Domains\Clientes\Domain\ClienteNoEncontradoException;
-use App\Domains\Clientes\Domain\Dto\ClienteDetalleDto;
-use App\Domains\Clientes\Domain\Dto\FiltroClientesDto;
-use App\Domains\Clientes\Domain\Interfaces\IClienteQueryRepository;
+use App\Domains\Clientes\Dto\ClienteDetalleDto;
+use App\Domains\Clientes\Dto\FiltroClientesDto;
+use App\Domains\Clientes\Exceptions\ClienteNoEncontradoException;
 use App\Domains\Clientes\Features\ListarClientes\ListarClientesQueryHandler;
 use App\Domains\Clientes\Features\VerCliente\VerClienteQueryHandler;
+use App\Domains\Clientes\Interfaces\IClienteQueryRepository;
 use App\Shared\Paginacion\Pagina;
 use PHPUnit\Framework\TestCase;
 

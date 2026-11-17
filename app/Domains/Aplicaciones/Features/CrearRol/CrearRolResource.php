@@ -2,7 +2,7 @@
 
 namespace App\Domains\Aplicaciones\Features\CrearRol;
 
-use App\Domains\Aplicaciones\Domain\Dto\RolParaEscribirDto;
+use App\Domains\Aplicaciones\Dto\RolParaEscribirDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

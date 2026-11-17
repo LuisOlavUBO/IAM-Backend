@@ -3,8 +3,8 @@
 namespace App\Domains\{{dominio}}\Features\{{caso}};
 
 /**
- * Caso de uso {{caso}} ({{tipo}} de CQRS lite). Recibe por constructor solo las interfaces de
- * Domain/Interfaces que usa; nunca clases de Infrastructure/ ni de otro caso de uso, ni el Request.
+ * Caso de uso {{caso}} ({{tipo}} de CQRS lite). Recibe por constructor solo las interfaces
+ * (Interfaces/) que usa; nunca clases de Infrastructure/ ni de otro caso de uso, ni el Request.
  */
 final class {{caso}}{{tipo}}Handler
 {
@@ -14,7 +14,7 @@ final class {{caso}}{{tipo}}Handler
      */
     public function __invoke(array $datos): array
     {
-        // TODO: la lógica del caso de uso (un Dto de Domain/Dto en vez del array cuando cruce una interfaz).
+        // TODO: la lógica del caso de uso (un Dto de Dto/ en vez del array cuando cruce una interfaz).
         return $datos;
     }
 }

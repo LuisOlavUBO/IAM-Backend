@@ -2,7 +2,7 @@
 
 namespace App\Domains\Aplicaciones\Features\EditarPermiso;
 
-use App\Domains\Aplicaciones\Domain\Dto\PermisoParaEscribirDto;
+use App\Domains\Aplicaciones\Dto\PermisoParaEscribirDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

@@ -2,12 +2,12 @@
 
 namespace App\Domains\Aplicaciones\Infrastructure;
 
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionDetalleDto;
-use App\Domains\Aplicaciones\Domain\Dto\AplicacionResumenDto;
-use App\Domains\Aplicaciones\Domain\Dto\FiltroAplicacionesDto;
-use App\Domains\Aplicaciones\Domain\Dto\PermisoDto;
-use App\Domains\Aplicaciones\Domain\Dto\RolDto;
-use App\Domains\Aplicaciones\Domain\Interfaces\IAplicacionQueryRepository;
+use App\Domains\Aplicaciones\Dto\AplicacionDetalleDto;
+use App\Domains\Aplicaciones\Dto\AplicacionResumenDto;
+use App\Domains\Aplicaciones\Dto\FiltroAplicacionesDto;
+use App\Domains\Aplicaciones\Dto\PermisoDto;
+use App\Domains\Aplicaciones\Dto\RolDto;
+use App\Domains\Aplicaciones\Interfaces\IAplicacionQueryRepository;
 use App\Shared\Paginacion\Pagina;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;

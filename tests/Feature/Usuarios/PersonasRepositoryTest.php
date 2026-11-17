@@ -2,14 +2,14 @@
 
 namespace Tests\Feature\Usuarios;
 
-use App\Domains\Usuarios\Domain\ClaveTemporal;
-use App\Domains\Usuarios\Domain\CorreoEnUsoException;
-use App\Domains\Usuarios\Domain\Dto\EstadoPersonaDto;
-use App\Domains\Usuarios\Domain\Dto\NuevaPersonaDto;
-use App\Domains\Usuarios\Domain\Dto\RolDeAplicacionDto;
-use App\Domains\Usuarios\Domain\Interfaces\IPersonasRepository;
-use App\Domains\Usuarios\Domain\RutEnUsoException;
+use App\Domains\Usuarios\Dto\EstadoPersonaDto;
+use App\Domains\Usuarios\Dto\NuevaPersonaDto;
+use App\Domains\Usuarios\Dto\RolDeAplicacionDto;
+use App\Domains\Usuarios\Exceptions\CorreoEnUsoException;
+use App\Domains\Usuarios\Exceptions\RutEnUsoException;
 use App\Domains\Usuarios\Infrastructure\PersonasRepository;
+use App\Domains\Usuarios\Interfaces\IPersonasRepository;
+use App\Domains\Usuarios\Rules\ClaveTemporal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

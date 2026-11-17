@@ -1,0 +1,124 @@
+# Spec Delta
+
+## MODIFIED Requirements
+
+### Requirement: Capas opcionales y registro del dominio
+Las carpetas del núcleo (`Rules/`, `Exceptions/`, `Dto/`, `Interfaces/`), `Infrastructure/` y `Contracts/` de un dominio MUST existir solo cuando contienen algo. Cada dominio SHALL registrar qué implementación corresponde a cada interfaz en un `ServiceProvider` propio, listado en `bootstrap/providers.php`, y sus rutas en `routes/v1.php`.
+
+#### Scenario: Interfaces enlazadas por el dominio
+- **WHEN** se resuelve del contenedor `IUsuarioQueryRepository`
+- **THEN** se obtiene `UsuarioQueryRepository` de `Usuarios/Infrastructure`, enlazado por `UsuariosServiceProvider`
+
+#### Scenario: Dominio sin capas vacías
+- **WHEN** un dominio no tiene núcleo propio, como Acceso
+- **THEN** su carpeta no tiene `Rules/`, `Exceptions/`, `Dto/` ni `Interfaces/`, ni carpetas vacías
+
+#### Scenario: Dominio con solo parte del núcleo
+- **WHEN** un dominio no tiene reglas ni excepciones propias, como Auditoria
+- **THEN** su carpeta tiene `Dto/` e `Interfaces/`, y no tiene `Rules/` ni `Exceptions/`
+
+#### Scenario: Dominio sin Contracts
+- **WHEN** ningún otro dominio usa un dominio, como Auditoria
+- **THEN** su carpeta no tiene `Contracts/`
+
+### Requirement: Organización interna del núcleo
+El núcleo de un dominio SHALL repartirse en cuatro carpetas al nivel del dominio: `Rules/` (reglas y objetos de valor), `Exceptions/` (excepciones de negocio), `Dto/` (DTO que cruzan las interfaces del dominio) e `Interfaces/` (repositorios y servicios que el dominio necesita). Ningún dominio MUST tener una carpeta `Domain/`. Las carpetas del núcleo e `Infrastructure/` MUST NOT tener subcarpetas hasta que pasen de unos diez archivos.
+
+#### Scenario: Núcleo de Usuarios
+- **WHEN** se revisa `app/Domains/Usuarios/`
+- **THEN** contiene `ClaveTemporal` y `ReglasDeRoles` en `Rules/`, `UsuarioNoEncontradoException` en `Exceptions/`, `UsuarioDetalleDto` en `Dto/` e `IUsuarioQueryRepository` en `Interfaces/`, sin subcarpetas dentro de ellas
+
+#### Scenario: Sin carpeta Domain
+- **WHEN** se buscan carpetas `app/Domains/*/Domain/`
+- **THEN** no existe ninguna
+
+#### Scenario: Carpeta fuera de la estructura
+- **GIVEN** un archivo en `app/Domains/Usuarios/Domain/X.php` (o en cualquier carpeta del dominio que no sea `Features`, `Rules`, `Exceptions`, `Dto`, `Interfaces`, `Infrastructure`, `Contracts` ni `routes`)
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la carpeta no reconocida
+
+### Requirement: Dependencias dentro de un dominio
+Las dependencias SHALL ir hacia adentro: `Features` puede usar el núcleo, `Contracts` y `Shared`; `Infrastructure` implementa las interfaces de `Interfaces/` y de `Contracts`. El núcleo (`Rules`, `Exceptions`, `Dto`, `Interfaces`) MUST NOT depender de `Features`, de `Infrastructure`, de `Contracts` ni de clases HTTP, y sus cuatro carpetas pueden usarse entre sí. Un caso de uso MUST NOT importar clases de otro caso de uso.
+
+#### Scenario: Handler que depende de un repositorio
+- **WHEN** un handler necesita datos de la base
+- **THEN** recibe una interfaz de `Interfaces/` por constructor, y su implementación en `Infrastructure/` se enlaza en el `ServiceProvider` del dominio
+
+#### Scenario: Regla que usa un Dto y lanza una excepción
+- **GIVEN** una clase de `Usuarios/Rules/` que importa una clase de `Usuarios/Dto/` y una de `Usuarios/Exceptions/`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test no reporta esas dependencias
+
+#### Scenario: Núcleo que importa un caso de uso
+- **GIVEN** una clase de `Usuarios/Rules/` que importa una clase de `Usuarios/Features/VerUsuario/`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la dependencia prohibida
+
+#### Scenario: Núcleo que importa HTTP
+- **GIVEN** una clase de `Usuarios/Interfaces/` que importa `Illuminate\Http\Request`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la dependencia prohibida
+
+#### Scenario: Caso de uso que importa a otro
+- **GIVEN** una clase de `Features/VerUsuario/` que importa una clase de `Features/ListarUsuarios/`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la dependencia prohibida
+
+### Requirement: Dependencias entre dominios
+Un dominio MUST depender de otro solo a través de la carpeta `Contracts/` del otro. MUST NOT importar sus `Features`, su núcleo (`Rules`, `Exceptions`, `Dto`, `Interfaces`) ni su `Infrastructure`. `app/Shared` MUST NOT depender de ningún dominio.
+
+#### Scenario: Dominio que usa el modelo de otro
+- **GIVEN** una clase de `Domains/Aplicaciones` que importa una clase de `Domains/Usuarios/Rules`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el archivo y la dependencia prohibida
+
+#### Scenario: Núcleo compartido independiente
+- **WHEN** se revisan las importaciones de `app/Shared`
+- **THEN** ninguna apunta a `App\Domains`
+
+### Requirement: Puntos de entrada fuera de los dominios
+Los comandos de Artisan (`app/Console`) y la configuración de la aplicación SHALL poder usar `Shared` y el núcleo, `Contracts` y `Features` de cualquier dominio, porque coordinan varios dominios. MUST NOT importar `Infrastructure` de ningún dominio.
+
+#### Scenario: Comando de instalación
+- **WHEN** se revisan las importaciones de `iam:install`
+- **THEN** usa la auditoría y el RUT de `Shared`, la clave temporal de `Usuarios/Rules` y la creación de clientes de `Clientes/Rules` y `Clientes/Interfaces`, y ninguna clase de `Infrastructure`
+
+### Requirement: Nomenclatura de clases
+Cada clase SHALL decir su rol en el nombre: el negocio en español y el rol técnico como sufijo o prefijo al estilo .NET. Las interfaces MUST empezar con `I`; los objetos de datos `final readonly` MUST terminar en `Dto`; las excepciones de negocio en `Exception`; los repositorios en `QueryRepository` (lectura) o `Repository` (escritura); los servicios que un dominio ofrece a otros en `Service`; y las piezas de un caso de uso en `Endpoint`, `Request`, `QueryHandler`, `CommandHandler` y `Resource`.
+
+#### Scenario: Clases de Usuarios
+- **WHEN** se revisa `app/Domains/Usuarios`
+- **THEN** encuentra `IUsuarioQueryRepository` en `Interfaces/`, `UsuarioResumenDto` y `UsuarioDetalleDto` en `Dto/`, `UsuarioNoEncontradoException` en `Exceptions/`, `UsuarioQueryRepository` en `Infrastructure/` e `IDirectorioUsuariosService` con `PersonaBasicaDto` en `Contracts/`
+
+### Requirement: Lecturas por repositorios de consulta
+Los casos de uso de solo lectura SHALL obtener sus datos de un repositorio de consulta (`I<Entidad>QueryRepository` en `Interfaces/`) que devuelve DTO de solo lectura con las columnas que la respuesta necesita, sin pasar por las entidades de escritura. Las consultas MUST NOT cargar columnas de credenciales (`password`, `remember_token`, `entra_oid`) cuando la respuesta no las usa, y las interfaces MUST NOT exponer tipos de paginación de Laravel.
+
+#### Scenario: Listado de usuarios sin credenciales en memoria
+- **WHEN** se pide `GET /api/iam/v1/usuarios`
+- **THEN** la consulta a `users` selecciona solo `uuid`, `name`, `email`, `rut` y `disabled_at`, y la respuesta es la misma que define la spec `usuarios`
+
+#### Scenario: Contrato sin tipos de Laravel
+- **WHEN** se revisa `IUsuarioQueryRepository`
+- **THEN** su listado devuelve la página de resultados de `Shared`, no un `LengthAwarePaginator`
+
+### Requirement: Verificación automática de la arquitectura
+Un test de arquitectura SHALL recorrer `app/` y fallar, nombrando el archivo y la importación, ante cualquier dependencia que prohíben los requisitos de dependencias de este spec y ante un handler (`…QueryHandler` o `…CommandHandler`) que importe clases HTTP (`Illuminate\Http`). MUST correr en la suite normal (`php artisan test`) y no requerir dependencias nuevas ni base de datos.
+
+#### Scenario: Código que respeta las reglas
+- **WHEN** se ejecuta `php artisan test` sobre el código de este cambio
+- **THEN** el test de arquitectura pasa
+
+#### Scenario: Infraestructura importada por un comando
+- **GIVEN** un comando de `app/Console` que importa una clase de `Domains/*/Infrastructure`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el comando y la clase importada
+
+#### Scenario: Handler que importa HTTP
+- **GIVEN** un `ListarUsuariosQueryHandler` o un `CrearUsuarioCommandHandler` que importa `Illuminate\Http\Request`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test falla nombrando el handler y la clase importada
+
+#### Scenario: Endpoint que usa HTTP
+- **GIVEN** un `CrearUsuarioEndpoint` que importa `Illuminate\Http\JsonResponse`
+- **WHEN** se ejecuta el test de arquitectura
+- **THEN** el test no reporta esa dependencia

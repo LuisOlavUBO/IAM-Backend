@@ -2,7 +2,7 @@
 
 namespace App\Domains\Auditoria\Features\ListarAuditoria;
 
-use App\Domains\Auditoria\Domain\Dto\FiltroAuditoriaDto;
+use App\Domains\Auditoria\Dto\FiltroAuditoriaDto;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

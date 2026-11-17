@@ -2,10 +2,10 @@
 
 namespace App\Domains\Clientes\Features\QuitarRolACliente;
 
-use App\Domains\Clientes\Domain\ClienteNoEncontradoException;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
-use App\Domains\Clientes\Domain\ReglasDeClientes;
-use App\Domains\Clientes\Domain\RolNoAsignadoException;
+use App\Domains\Clientes\Exceptions\ClienteNoEncontradoException;
+use App\Domains\Clientes\Exceptions\RolNoAsignadoException;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Rules\ReglasDeClientes;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

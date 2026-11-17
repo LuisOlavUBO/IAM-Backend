@@ -2,7 +2,7 @@
 
 namespace App\Domains\Indicadores\Features\VerIndicadores;
 
-use App\Domains\Indicadores\Domain\Interfaces\IIndicadoresQueryRepository;
+use App\Domains\Indicadores\Interfaces\IIndicadoresQueryRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 
@@ -25,6 +25,13 @@ final class VerIndicadoresQueryHandler
 
     public const SEGUNDOS_EN_CACHE = 300;
 
+    /**
+     * Version of the cached blocks, part of the key. Raise it when the class of a cached Dto changes name
+     * or namespace: entries of the previous version would read back as __PHP_Incomplete_Class (design D6
+     * of nucleo-explicito), and with a new key they are never read and expire on their own.
+     */
+    public const VERSION_CACHE = 2;
+
     public function __construct(private readonly IIndicadoresQueryRepository $indicadores) {}
 
     /**
@@ -41,7 +48,7 @@ final class VerIndicadoresQueryHandler
             }
 
             /** @var array{calculado_en: string, datos: object} $guardado */
-            $guardado = Cache::remember("indicadores.{$bloque}", self::SEGUNDOS_EN_CACHE, fn () => [
+            $guardado = Cache::remember('indicadores.'.$bloque.'.v'.self::VERSION_CACHE, self::SEGUNDOS_EN_CACHE, fn () => [
                 'calculado_en' => CarbonImmutable::now()->toIso8601String(),
                 'datos' => $this->indicadores->{$bloque}(),
             ]);

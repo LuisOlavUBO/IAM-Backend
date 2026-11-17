@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Clientes;
 
-use App\Domains\Clientes\Domain\Redireccion;
+use App\Domains\Clientes\Rules\Redireccion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\IniciaSesionEnIam;

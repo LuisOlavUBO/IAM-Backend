@@ -3,9 +3,9 @@
 namespace App\Domains\Clientes\Features\CrearCliente;
 
 use App\Domains\Aplicaciones\Contracts\IDirectorioAplicacionesService;
-use App\Domains\Clientes\Domain\ClienteExistenteException;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
-use App\Domains\Clientes\Domain\NuevoCliente;
+use App\Domains\Clientes\Exceptions\ClienteExistenteException;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Rules\NuevoCliente;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

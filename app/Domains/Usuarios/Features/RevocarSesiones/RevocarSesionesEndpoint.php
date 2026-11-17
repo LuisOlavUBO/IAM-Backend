@@ -2,7 +2,7 @@
 
 namespace App\Domains\Usuarios\Features\RevocarSesiones;
 
-use App\Domains\Usuarios\Domain\Dto\QuienActuaDto;
+use App\Domains\Usuarios\Dto\QuienActuaDto;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;

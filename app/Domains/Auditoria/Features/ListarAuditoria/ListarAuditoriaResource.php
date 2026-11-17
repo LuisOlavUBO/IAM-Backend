@@ -2,7 +2,7 @@
 
 namespace App\Domains\Auditoria\Features\ListarAuditoria;
 
-use App\Domains\Auditoria\Domain\Dto\EntradaAuditoriaDto;
+use App\Domains\Auditoria\Dto\EntradaAuditoriaDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

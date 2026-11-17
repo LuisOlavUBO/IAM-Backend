@@ -3,11 +3,11 @@
 namespace App\Domains\Clientes;
 
 use App\Domains\Clientes\Contracts\IDirectorioClientesService;
-use App\Domains\Clientes\Domain\Interfaces\IClienteQueryRepository;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
 use App\Domains\Clientes\Infrastructure\ClienteQueryRepository;
 use App\Domains\Clientes\Infrastructure\ClientesRepository;
 use App\Domains\Clientes\Infrastructure\DirectorioClientesService;
+use App\Domains\Clientes\Interfaces\IClienteQueryRepository;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**

@@ -2,9 +2,9 @@
 
 namespace App\Domains\Clientes\Features\ListarClientes;
 
-use App\Domains\Clientes\Domain\Dto\ClienteResumenDto;
-use App\Domains\Clientes\Domain\Dto\FiltroClientesDto;
-use App\Domains\Clientes\Domain\Interfaces\IClienteQueryRepository;
+use App\Domains\Clientes\Dto\ClienteResumenDto;
+use App\Domains\Clientes\Dto\FiltroClientesDto;
+use App\Domains\Clientes\Interfaces\IClienteQueryRepository;
 use App\Shared\Paginacion\Pagina;
 
 /**

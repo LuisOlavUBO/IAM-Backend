@@ -2,7 +2,7 @@
 
 namespace App\Domains\Aplicaciones\Features\ListarAplicaciones;
 
-use App\Domains\Aplicaciones\Domain\Dto\FiltroAplicacionesDto;
+use App\Domains\Aplicaciones\Dto\FiltroAplicacionesDto;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

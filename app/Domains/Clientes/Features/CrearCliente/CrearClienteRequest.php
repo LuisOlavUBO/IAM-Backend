@@ -2,8 +2,8 @@
 
 namespace App\Domains\Clientes\Features\CrearCliente;
 
-use App\Domains\Clientes\Domain\NuevoCliente;
-use App\Domains\Clientes\Domain\Redireccion;
+use App\Domains\Clientes\Rules\NuevoCliente;
+use App\Domains\Clientes\Rules\Redireccion;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

@@ -2,10 +2,10 @@
 
 namespace App\Domains\Aplicaciones\Features\BorrarAplicacion;
 
-use App\Domains\Aplicaciones\Domain\AplicacionNoEncontradaException;
-use App\Domains\Aplicaciones\Domain\EnUsoException;
-use App\Domains\Aplicaciones\Domain\Interfaces\ICatalogoRepository;
-use App\Domains\Aplicaciones\Domain\ReglasDeCatalogo;
+use App\Domains\Aplicaciones\Exceptions\AplicacionNoEncontradaException;
+use App\Domains\Aplicaciones\Exceptions\EnUsoException;
+use App\Domains\Aplicaciones\Interfaces\ICatalogoRepository;
+use App\Domains\Aplicaciones\Rules\ReglasDeCatalogo;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use UBO\Common\Problems\Exceptions\DomainProblem;

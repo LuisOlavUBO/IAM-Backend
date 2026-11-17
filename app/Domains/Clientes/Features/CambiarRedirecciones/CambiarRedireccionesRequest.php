@@ -2,7 +2,7 @@
 
 namespace App\Domains\Clientes\Features\CambiarRedirecciones;
 
-use App\Domains\Clientes\Domain\Redireccion;
+use App\Domains\Clientes\Rules\Redireccion;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

@@ -2,7 +2,7 @@
 
 namespace App\Domains\Usuarios\Infrastructure;
 
-use App\Domains\Usuarios\Domain\Interfaces\IRevocadorDeSesiones;
+use App\Domains\Usuarios\Interfaces\IRevocadorDeSesiones;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;

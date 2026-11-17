@@ -2,8 +2,8 @@
 
 namespace App\Domains\Usuarios\Infrastructure;
 
-use App\Domains\Usuarios\Domain\Dto\RolDeAplicacionDto;
-use App\Domains\Usuarios\Domain\Interfaces\IRolesDeUsuarioRepository;
+use App\Domains\Usuarios\Dto\RolDeAplicacionDto;
+use App\Domains\Usuarios\Interfaces\IRolesDeUsuarioRepository;
 use Illuminate\Support\Facades\DB;
 
 /**

@@ -2,11 +2,11 @@
 
 namespace App\Domains\Clientes\Infrastructure;
 
-use App\Domains\Clientes\Domain\Dto\ClienteDetalleDto;
-use App\Domains\Clientes\Domain\Dto\ClienteResumenDto;
-use App\Domains\Clientes\Domain\Dto\FiltroClientesDto;
-use App\Domains\Clientes\Domain\Dto\RolClienteDto;
-use App\Domains\Clientes\Domain\Interfaces\IClienteQueryRepository;
+use App\Domains\Clientes\Dto\ClienteDetalleDto;
+use App\Domains\Clientes\Dto\ClienteResumenDto;
+use App\Domains\Clientes\Dto\FiltroClientesDto;
+use App\Domains\Clientes\Dto\RolClienteDto;
+use App\Domains\Clientes\Interfaces\IClienteQueryRepository;
 use App\Shared\Paginacion\Pagina;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;

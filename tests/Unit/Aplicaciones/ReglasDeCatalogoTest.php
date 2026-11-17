@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\Aplicaciones;
 
-use App\Domains\Aplicaciones\Domain\CatalogoDeIamAdminException;
-use App\Domains\Aplicaciones\Domain\Dto\PermisoParaEscribirDto;
-use App\Domains\Aplicaciones\Domain\ReglasDeCatalogo;
+use App\Domains\Aplicaciones\Dto\PermisoParaEscribirDto;
+use App\Domains\Aplicaciones\Exceptions\CatalogoDeIamAdminException;
+use App\Domains\Aplicaciones\Rules\ReglasDeCatalogo;
 use PHPUnit\Framework\TestCase;
 
 /**

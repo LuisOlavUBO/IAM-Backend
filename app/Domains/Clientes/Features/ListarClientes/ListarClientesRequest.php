@@ -2,7 +2,7 @@
 
 namespace App\Domains\Clientes\Features\ListarClientes;
 
-use App\Domains\Clientes\Domain\Dto\FiltroClientesDto;
+use App\Domains\Clientes\Dto\FiltroClientesDto;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

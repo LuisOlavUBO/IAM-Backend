@@ -2,8 +2,8 @@
 
 namespace App\Domains\Clientes\Features\VerCliente;
 
-use App\Domains\Clientes\Domain\Dto\ClienteDetalleDto;
-use App\Domains\Clientes\Domain\Dto\RolClienteDto;
+use App\Domains\Clientes\Dto\ClienteDetalleDto;
+use App\Domains\Clientes\Dto\RolClienteDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

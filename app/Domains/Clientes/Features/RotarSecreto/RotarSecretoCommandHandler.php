@@ -2,10 +2,10 @@
 
 namespace App\Domains\Clientes\Features\RotarSecreto;
 
-use App\Domains\Clientes\Domain\ClienteNoEncontradoException;
-use App\Domains\Clientes\Domain\ClientePublicoException;
-use App\Domains\Clientes\Domain\Interfaces\IClientesRepository;
-use App\Domains\Clientes\Domain\SecretoDeCliente;
+use App\Domains\Clientes\Exceptions\ClienteNoEncontradoException;
+use App\Domains\Clientes\Exceptions\ClientePublicoException;
+use App\Domains\Clientes\Interfaces\IClientesRepository;
+use App\Domains\Clientes\Rules\SecretoDeCliente;
 use App\Shared\Auditoria\IAuditor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
