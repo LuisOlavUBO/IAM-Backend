@@ -2148,7 +2148,7 @@ components:
 
     ClienteResumen:
       type: object
-      required: [id, nombre, aplicacion, revocado, roles]
+      required: [id, nombre, aplicacion, concesiones, revocado, roles]
       properties:
         id:
           type: string
@@ -2159,6 +2159,13 @@ components:
           type: string
           description: Nombre de la aplicación a la que pertenece.
           example: iam-admin
+        concesiones:
+          type: array
+          description: >-
+            Tipos de concesión OAuth (`grant_types`), como en el detalle. Con `authorization_code` es un cliente
+            de login (SSO); con `client_credentials`, de servicio (M2M).
+          items: { type: string }
+          example: [authorization_code, refresh_token]
         revocado: { type: boolean }
         roles:
           type: integer

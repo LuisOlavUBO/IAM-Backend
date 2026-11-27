@@ -23,7 +23,7 @@ Define cómo el portal consulta los clientes OAuth registrados en IAM (el listad
 - **THEN** la respuesta es 401 con `error` igual a `NO_AUTENTICADO`
 
 ### Requirement: Listado paginado de clientes
-`GET /api/iam/v1/clientes` SHALL devolver los clientes OAuth en `data`, ordenados por nombre y luego por id, con la paginación en `meta` (`total`, `pagina`, `por_pagina`). Cada elemento MUST traer `id` (en minúsculas), `nombre`, `aplicacion` (nombre de su aplicación), `revocado` y `roles` (cantidad de roles asignados). Los clientes revocados MUST aparecer. La página por omisión es 1 y el tamaño por omisión 20; `por_pagina` MUST aceptar de 1 a 100.
+`GET /api/iam/v1/clientes` SHALL devolver los clientes OAuth en `data`, ordenados por nombre y luego por id, con la paginación en `meta` (`total`, `pagina`, `por_pagina`). Cada elemento MUST traer `id` (en minúsculas), `nombre`, `aplicacion` (nombre de su aplicación), `concesiones` (los `grant_types`, como en el detalle), `revocado` y `roles` (cantidad de roles asignados). Los clientes revocados MUST aparecer. La página por omisión es 1 y el tamaño por omisión 20; `por_pagina` MUST aceptar de 1 a 100.
 
 #### Scenario: Primera página
 - **GIVEN** 25 clientes
@@ -33,7 +33,7 @@ Define cómo el portal consulta los clientes OAuth registrados en IAM (el listad
 #### Scenario: Cliente revocado y conteo de roles
 - **GIVEN** el cliente `iam-admin-sistema` de `iam-admin` con 2 roles y un cliente revocado sin roles
 - **WHEN** se pide el listado
-- **THEN** `iam-admin-sistema` trae `aplicacion` `iam-admin`, `revocado` `false` y `roles` 2, y el revocado aparece con `revocado` `true` y `roles` 0
+- **THEN** `iam-admin-sistema` trae `aplicacion` `iam-admin`, `concesiones` `["client_credentials"]`, `revocado` `false` y `roles` 2, y el revocado aparece con `revocado` `true` y `roles` 0
 
 #### Scenario: Paginación inválida
 - **WHEN** se pide `GET /api/iam/v1/clientes?por_pagina=500` o `?pagina=0`

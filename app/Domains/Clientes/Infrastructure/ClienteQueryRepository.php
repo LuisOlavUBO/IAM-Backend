@@ -33,13 +33,15 @@ final class ClienteQueryRepository implements IClienteQueryRepository
             ->orderBy('oauth_clients.id')
             ->forPage($filtro->pagina, $filtro->porPagina)
             ->get([
-                'oauth_clients.id', 'oauth_clients.name', 'applications.name as aplicacion', 'oauth_clients.revoked',
+                'oauth_clients.id', 'oauth_clients.name', 'applications.name as aplicacion', 'oauth_clients.grant_types',
+                'oauth_clients.revoked',
                 DB::raw('(SELECT COUNT(*) FROM oauth_client_role WHERE oauth_client_role.client_id = oauth_clients.id) AS roles'),
             ])
             ->map(fn (object $fila) => new ClienteResumenDto(
                 Str::lower($fila->id),
                 $fila->name,
                 $fila->aplicacion,
+                self::lista($fila->grant_types),
                 (bool) $fila->revoked,
                 (int) $fila->roles,
             ))

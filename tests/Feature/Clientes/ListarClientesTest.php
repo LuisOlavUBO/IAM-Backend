@@ -31,14 +31,14 @@ class ListarClientesTest extends TestCase
     /**
      * An OAuth client as iam:install or API-Auth would leave it, with $roles roles of its application.
      */
-    private function cliente(string $nombre, string $aplicacion = 'iam-admin', bool $revocado = false, int $roles = 0, ?string $id = null): string
+    private function cliente(string $nombre, string $aplicacion = 'iam-admin', bool $revocado = false, int $roles = 0, ?string $id = null, string $concesiones = '["client_credentials"]'): string
     {
         $id ??= Str::lower((string) Str::uuid7());
         $aplicacionId = $this->aplicacion($aplicacion);
 
         DB::table('oauth_clients')->insert([
             'id' => $id, 'application_id' => $aplicacionId, 'name' => $nombre, 'secret' => 'hash',
-            'redirect_uris' => '[]', 'grant_types' => '["client_credentials"]', 'revoked' => $revocado,
+            'redirect_uris' => '[]', 'grant_types' => $concesiones, 'revoked' => $revocado,
         ]);
 
         for ($i = 1; $i <= $roles; $i++) {
@@ -105,9 +105,23 @@ class ListarClientesTest extends TestCase
         $this->getJson('/api/iam/v1/clientes')
             ->assertOk()
             ->assertJsonPath('data', [
-                ['id' => $viejo, 'nombre' => 'antiguo', 'aplicacion' => 'fuas', 'revocado' => true, 'roles' => 0],
-                ['id' => $sistema, 'nombre' => 'iam-admin-sistema', 'aplicacion' => 'iam-admin', 'revocado' => false, 'roles' => 2],
+                ['id' => $viejo, 'nombre' => 'antiguo', 'aplicacion' => 'fuas', 'concesiones' => ['client_credentials'], 'revocado' => true, 'roles' => 0],
+                ['id' => $sistema, 'nombre' => 'iam-admin-sistema', 'aplicacion' => 'iam-admin', 'concesiones' => ['client_credentials'], 'revocado' => false, 'roles' => 2],
             ]);
+    }
+
+    public function test_each_client_has_its_grant_types_so_the_portal_can_tell_login_from_service(): void
+    {
+        $this->cliente('a-login', concesiones: '["authorization_code","refresh_token"]');
+        $this->cliente('b-servicio');
+        $this->cliente('c-raro', concesiones: 'no es json');
+        $this->conPermiso();
+
+        $this->getJson('/api/iam/v1/clientes')
+            ->assertOk()
+            ->assertJsonPath('data.0.concesiones', ['authorization_code', 'refresh_token'])
+            ->assertJsonPath('data.1.concesiones', ['client_credentials'])
+            ->assertJsonPath('data.2.concesiones', []);
     }
 
     public function test_invalid_pagination_answers_422(): void

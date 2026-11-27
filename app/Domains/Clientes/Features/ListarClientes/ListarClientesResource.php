@@ -14,7 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 final class ListarClientesResource extends JsonResource
 {
     /**
-     * @return array{id: string, nombre: string, aplicacion: string, revocado: bool, roles: int}
+     * @return array{id: string, nombre: string, aplicacion: string, concesiones: list<string>, revocado: bool, roles: int}
      */
     public function toArray(Request $request): array
     {
@@ -22,6 +22,7 @@ final class ListarClientesResource extends JsonResource
             'id' => $this->resource->id,
             'nombre' => $this->resource->nombre,
             'aplicacion' => $this->resource->aplicacion,
+            'concesiones' => $this->resource->concesiones,
             'revocado' => $this->resource->revocado,
             'roles' => $this->resource->roles,
         ];
