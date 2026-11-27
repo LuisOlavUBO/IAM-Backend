@@ -32,7 +32,10 @@ tests {
     expect(res.status).to.equal(200);
     expect(res.body.data).to.be.an("array");
     expect(res.body.meta).to.have.all.keys("total", "pagina", "por_pagina");
-    res.body.data.forEach((cliente) => expect(cliente).to.not.have.property("secret"));
+    res.body.data.forEach((cliente) => {
+      expect(cliente).to.not.have.property("secret");
+      expect(cliente.concesiones).to.be.an("array");
+    });
   });
 }
 
@@ -48,7 +51,7 @@ docs {
   ```json
   {
     "data": [
-      { "id": "0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b", "nombre": "iam-admin-sistema", "aplicacion": "iam-admin", "revocado": false, "roles": 2 }
+      { "id": "0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b", "nombre": "iam-admin-sistema", "aplicacion": "iam-admin", "concesiones": ["client_credentials"], "revocado": false, "roles": 2 }
     ],
     "meta": { "total": 1, "pagina": 1, "por_pagina": 20 }
   }
